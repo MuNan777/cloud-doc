@@ -1,6 +1,7 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow } from 'electron'
 import isDev from 'electron-is-dev'
 import path from 'path'
+import { loadIpcMainHandle } from './ipc/ipcMainHandle'
 
 const urlLocation = isDev ? 'http://localhost:3000' : 'dummyUrl'
 
@@ -15,9 +16,7 @@ const createWindow = () => {
     }
   })
 
-  ipcMain.handle('CurrentWindow', async () => {
-    return main
-  })
+  loadIpcMainHandle(main)
 
   main.loadURL(urlLocation)
 }
@@ -25,3 +24,4 @@ const createWindow = () => {
 app.whenReady().then(() => {
   createWindow()
 })
+

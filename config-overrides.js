@@ -2,7 +2,7 @@ const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
 const {
   override,
   addWebpackPlugin,
-  setWebpackTarget
+  setWebpackTarget,
 } = require("customize-cra");
 module.exports = {
   webpack: override(

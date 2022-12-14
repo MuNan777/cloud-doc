@@ -9,9 +9,9 @@ import { faMarkdown } from '@fortawesome/free-brands-svg-icons'
 
 export interface FileListArgs {
   files: FileItem[],
-  onFileClick: (id?: string) => void,
+  onFileClick: (id: string) => void,
   onSaveEdit: (id: string, value: string, isNew: boolean) => void,
-  onFileDelete: (id?: string) => void
+  onFileDelete: (id: string) => void
 }
 
 const FileList = (props: FileListArgs) => {
@@ -23,7 +23,7 @@ const FileList = (props: FileListArgs) => {
 
   const { files, onFileClick, onSaveEdit, onFileDelete } = props
 
-  const closeSearch = useCallback((editItem: FileItem) => {
+  const closeInput = useCallback((editItem: FileItem) => {
     setEditStatus(false)
     setValue('')
     if (editItem.isNew) {
@@ -38,7 +38,10 @@ const FileList = (props: FileListArgs) => {
         const parentElement = getParentNode('file-item', clickedItem.current)
         if (parentElement) {
           const e = parentElement as HTMLElement
-          onFileClick(e.dataset.id)
+          const id = e.dataset.id
+          if (id) {
+            onFileClick(id)
+          }
         }
       }
     },
@@ -61,7 +64,9 @@ const FileList = (props: FileListArgs) => {
         if (parentElement) {
           const e = parentElement as HTMLElement
           const { id } = e.dataset
-          onFileDelete(id)
+          if (id) {
+            onFileDelete(id)
+          }
         }
       }
     },
@@ -76,10 +81,10 @@ const FileList = (props: FileListArgs) => {
         setValue('')
       }
       if (escPressed && editStatus) {
-        closeSearch(editItem)
+        closeInput(editItem)
       }
     }
-  }, [closeSearch, editStatus, enterPressed, escPressed, files, onSaveEdit, value])
+  }, [closeInput, editStatus, enterPressed, escPressed, files, onSaveEdit, value])
   useEffect(() => {
     const newFile = files.find(file => file.isNew)
     if (newFile) {
@@ -98,7 +103,7 @@ const FileList = (props: FileListArgs) => {
       {
         files.map(file => (
           <li
-            className="list-group-item bg-light row d-flex align-items-center file-item mx-0"
+            className="list-group-item bg-light d-flex align-items-center file-item mx-0"
             key={file.id}
             data-id={file.id}
             data-title={file.title}
@@ -106,14 +111,15 @@ const FileList = (props: FileListArgs) => {
             {
               (file.id !== editStatus && !file.isNew) &&
               <>
-                <span className="col-2">
+                <span className="me-2">
                   <FontAwesomeIcon
                     size="lg"
                     icon={faMarkdown}
                   />
                 </span>
                 <span
-                  className="col-10 c-link"
+                  className="c-link"
+                  style={{ height: '2.4rem', lineHeight: '2.4rem' }}
                   onClick={() => { onFileClick(file.id) }}
                 >
                   {file.title}
@@ -124,7 +130,7 @@ const FileList = (props: FileListArgs) => {
               ((file.id === editStatus) || file.isNew) &&
               <>
                 <input
-                  className="form-control col-10"
+                  className="form-control"
                   ref={node}
                   value={value}
                   placeholder="请输入文件名称"
@@ -132,12 +138,13 @@ const FileList = (props: FileListArgs) => {
                 />
                 <button
                   type="button"
-                  className="icon-button col-2"
-                  onClick={() => { closeSearch(file) }}
+                  className="icon-button bg-light border-0 ms-1"
+                  onClick={() => { closeInput(file) }}
                 >
                   <FontAwesomeIcon
                     title="关闭"
                     size="lg"
+                    className="btn btn-link"
                     icon={faTimes}
                   />
                 </button>

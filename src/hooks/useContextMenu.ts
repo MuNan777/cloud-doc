@@ -1,17 +1,16 @@
 
-import { Menu, MenuItemConstructorOptions, ipcRenderer } from 'electron'
+import { ipcRenderer, MenuItemConstructorOptions } from 'electron'
 import { useEffect, useRef } from 'react'
+import { contextmenu, contextmenuPopup } from '../ipc/ipcRenderer'
 
 const useContextMenu = (itemArr: MenuItemConstructorOptions[], targetSelector: string, deps?: React.DependencyList | undefined) => {
   let clickedElement = useRef<null | EventTarget>(null)
   useEffect(() => {
-    console.log(Menu)
-    const menu = Menu.buildFromTemplate(itemArr)
-    Menu.setApplicationMenu(menu)
+    contextmenu(ipcRenderer, itemArr)
     const handleContextMenu = async (e: MouseEvent) => {
       if (document.querySelector(targetSelector)?.contains(e.target as Node)) {
         clickedElement.current = e.target
-        menu.popup()
+        contextmenuPopup(ipcRenderer)
       }
     }
     window.addEventListener('contextmenu', handleContextMenu)
