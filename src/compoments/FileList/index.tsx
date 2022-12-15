@@ -33,7 +33,7 @@ const FileList = (props: FileListArgs) => {
 
   const clickedItem = useContextMenu([
     {
-      label: '打开',
+      label: '打开文件',
       click: () => {
         const parentElement = getParentNode('file-item', clickedItem.current)
         if (parentElement) {
@@ -58,7 +58,7 @@ const FileList = (props: FileListArgs) => {
       }
     },
     {
-      label: '删除',
+      label: '删除文件',
       click: () => {
         const parentElement = getParentNode('file-item', clickedItem.current)
         if (parentElement) {

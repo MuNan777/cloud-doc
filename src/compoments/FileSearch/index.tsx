@@ -3,7 +3,7 @@ import useKeyPress from "../../hooks/useKeyPress"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSearch, faClose } from '@fortawesome/free-solid-svg-icons'
 
-const FileSearch = (props: { title: string; onSearch: (keyword: string | boolean) => void; }) => {
+const FileSearch = (props: { title: string; onSearch: (keyword: string) => void; }) => {
   const [inputActive, setInputActive] = useState(false)
   const [value, setValue] = useState('')
   const enterPressed = useKeyPress('Enter')
@@ -17,7 +17,7 @@ const FileSearch = (props: { title: string; onSearch: (keyword: string | boolean
   const closeSearch = () => {
     setValue('')
     setInputActive(false)
-    props.onSearch(false)
+    props.onSearch('')
   }
 
   useEffect(() => {
