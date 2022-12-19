@@ -11,34 +11,34 @@ import SimpleMDE from "react-simplemde-editor";
 import "easymde/dist/easymde.min.css";
 import { getPreviewRender, objToArr } from './utils/common';
 import { v4 as uuidV4 } from 'uuid'
+import { readFile } from './utils/fileHelper'
+import Store from 'electron-store'
 
-const defaultFiles = [{
-  id: '1',
-  title: 'first post',
-  body: 'should be aware of this',
-  createdAt: 123456,
-  isNew: false,
-}, {
-  id: '2',
-  title: 'second post',
-  body: '## this is the title',
-  createdAt: 123456,
-  isNew: false,
-}] as FileItem[]
 
-const defaultFileMap: { [key: string]: FileItem } = {};
+export interface FileMapProps { [key: string]: FileItem }
 
-for (let file of defaultFiles) {
-  defaultFileMap[file.id] = file
+const fileStore = new Store<Record<string, FileMapProps>>({ 'name': 'Files Data' })
+
+const saveFilesToStore = (fileMap: FileMapProps) => {
+  const fileStoreObj = objToArr(fileMap).reduce<{ [key: string]: FileItem }>((result, file) => {
+    const { id, path, title, createdAt } = file
+    result[id] = {
+      id, path, title, createdAt, body: '', isNew: false
+    }
+    return result
+  }, {})
+  fileStore.set('fileMap', fileStoreObj)
 }
 
+const fs = window.require('fs')
+
 function App () {
-  const [fileMap, setFileMap] = useState<{ [key: string]: FileItem }>(defaultFileMap)
+  console.dir(fs)
+  const [fileMap, setFileMap] = useState<FileMapProps>(fileStore.get('fileMap') || {})
   const [activeFileId, setActiveFileId] = useState('')
   const [openedFileIds, setOpenedFileIds] = useState<string[]>([])
   const [unSavedFileIds, setUnSavedFileIds] = useState<string[]>([])
   const [searchedFiles, setSearchedFiles] = useState<FileItem[]>([])
-
   const files = objToArr(fileMap)
   const activeFile = fileMap[activeFileId]
   const openedFiles = openedFileIds.map(openId => {
@@ -89,6 +89,7 @@ function App () {
       id: newId,
       title: '',
       body: '## 请编写 Markdown',
+      path: '',
       createdAt: new Date().getTime(),
       isNew: true,
     }
