@@ -1,19 +1,22 @@
-import React, { useCallback, useState } from 'react';
-import './App.css';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import FileSearch from './compoments/FileSearch';
-import FileList from './compoments/FileList';
-import BottomBtn from './compoments/BottomBtn';
-import { faFileImport, faPlus } from '@fortawesome/free-solid-svg-icons';
-import TabList from './compoments/TabList';
-import { FileItem } from './types';
-import SimpleMDE from "react-simplemde-editor";
-import "easymde/dist/easymde.min.css";
-import { getPreviewRender, objToArr } from './utils/common';
+import React, { useCallback, useState } from 'react'
+import FileSearch from './compoments/FileSearch'
+import FileList from './compoments/FileList'
+import BottomBtn from './compoments/BottomBtn'
+import { faFileImport, faPlus } from '@fortawesome/free-solid-svg-icons'
+import TabList from './compoments/TabList'
+import { FileItem } from './types'
+import SimpleMDE from "react-simplemde-editor"
+import "easymde/dist/easymde.min.css"
+import { getPreviewRender, objToArr } from './utils/common'
 import { v4 as uuidV4 } from 'uuid'
-import { readFile } from './utils/fileHelper'
+import { exists, mkDir, readFile, removeFile, renameFile, writeFile } from './utils/fileHelper'
 import Store from 'electron-store'
+import './App.css'
+import 'bootstrap/dist/css/bootstrap.min.css'
+import { SAVED_LOCATION } from './config'
+import useIpcRenderer from './hooks/useIpcRenderer'
 
+const { join, dirname } = window.require('path')
 
 export interface FileMapProps { [key: string]: FileItem }
 
@@ -23,17 +26,21 @@ const saveFilesToStore = (fileMap: FileMapProps) => {
   const fileStoreObj = objToArr(fileMap).reduce<{ [key: string]: FileItem }>((result, file) => {
     const { id, path, title, createdAt } = file
     result[id] = {
-      id, path, title, createdAt, body: '', isNew: false
+      id, path, title, createdAt, body: '', isNew: false, isLoaded: false
     }
     return result
   }, {})
   fileStore.set('fileMap', fileStoreObj)
 }
 
-const fs = window.require('fs')
+(async () => {
+  const savedLocation = await SAVED_LOCATION()
+  if (!await exists(savedLocation)) {
+    mkDir(savedLocation)
+  }
+})()
 
 function App () {
-  console.dir(fs)
   const [fileMap, setFileMap] = useState<FileMapProps>(fileStore.get('fileMap') || {})
   const [activeFileId, setActiveFileId] = useState('')
   const [openedFileIds, setOpenedFileIds] = useState<string[]>([])
@@ -47,39 +54,58 @@ function App () {
 
   const fileList = (searchedFiles.length > 0) ? searchedFiles : files
 
-  const fileSearch = (keyword: string) => {
+  const fileSearch = useCallback((keyword: string) => {
     const newFiles = files.filter(file => file.title.includes(keyword))
     setSearchedFiles(newFiles)
-  }
+  }, [files])
 
-  const fileClick = (fileId: string) => {
+  const fileClick = async (fileId: string) => {
     setActiveFileId(fileId)
     const currentFile = fileMap[fileId]
     if (currentFile) {
+      if (!currentFile.isLoaded) {
+        const value = await readFile(currentFile.path)
+        const newFile = { ...fileMap[fileId], body: String(value), isLoaded: true }
+        setFileMap({ ...fileMap, [fileId]: newFile })
+      }
       if (!openedFileIds.includes(fileId)) {
         setOpenedFileIds([...openedFileIds, fileId])
       }
     }
   }
 
-  const deleteFile = (id: string) => {
-    if (fileMap[id]?.isNew) {
-      const { [id]: value, ...afterDelete } = fileMap
-      setFileMap(afterDelete)
-    } else {
-      const { [id]: value, ...afterDelete } = fileMap
-      setFileMap(afterDelete)
-      tabClose(id)
+  const deleteFile = async (id: string) => {
+    const item = fileMap[id]
+    if (item) {
+      if (item.isNew) {
+        const { [id]: value, ...afterDelete } = fileMap
+        setFileMap(afterDelete)
+      } else {
+        await removeFile(item.path)
+        const { [id]: value, ...afterDelete } = fileMap
+        setFileMap(afterDelete)
+        saveFilesToStore(afterDelete)
+        tabClose(id)
+      }
     }
+
   }
 
-  const updateFileName = (id: string, title: string, isNew: boolean) => {
-    const modifiedFile = { ...fileMap[id], title, isNew: false }
-    const newFiles = { ...fileMap, [id]: modifiedFile }
+  const updateFileName = async (id: string, title: string, isNew: boolean) => {
+    const newPath = isNew ?
+      join(await SAVED_LOCATION(), `${title}.md`) :
+      join(dirname(fileMap[id].path), `${title}.md`)
+    const modifiedFile = { ...fileMap[id], title, isNew: false, path: newPath }
+    const newFileMap = { ...fileMap, [id]: modifiedFile }
     if (isNew) {
-      setFileMap(newFiles)
+      await writeFile(newPath, fileMap[id].body)
+      setFileMap(newFileMap)
+      saveFilesToStore(newFileMap)
     } else {
-      setFileMap(newFiles)
+      const oldPath = fileMap[id].path
+      await renameFile(oldPath, newPath)
+      setFileMap(newFileMap)
+      saveFilesToStore(newFileMap)
     }
   }
 
@@ -92,6 +118,7 @@ function App () {
       path: '',
       createdAt: new Date().getTime(),
       isNew: true,
+      isLoaded: false
     }
     setFileMap({ ...fileMap, [newId]: newFile })
   }
@@ -123,6 +150,16 @@ function App () {
     }
   }, [activeFileId, fileMap, unSavedFileIds])
 
+  const saveCurrentFile = async () => {
+    const { path, body } = activeFile
+    await writeFile(path, body)
+    setUnSavedFileIds(unSavedFileIds.filter(id => id !== activeFile.id))
+  }
+
+  useIpcRenderer({
+    'save-edit-file': saveCurrentFile,
+    'create-new-file': createNewFile
+  })
 
   return (
     <>

@@ -1,6 +1,8 @@
 import { MenuItemConstructorOptions } from "electron";
+import { getPathType } from "../types";
 
-let id = 0;
+let id = 0
+
 
 export const contextmenu = (ipcRenderer: Electron.IpcRenderer, menuItems: MenuItemConstructorOptions[]) => {
   const menuClickMap = new Map<Number, Function>()
@@ -24,4 +26,8 @@ export const contextmenu = (ipcRenderer: Electron.IpcRenderer, menuItems: MenuIt
 
 export const contextmenuPopup = (ipcRenderer: Electron.IpcRenderer) => {
   ipcRenderer.invoke('contextmenu-popup')
+}
+
+export const getPath = async (ipcRenderer: Electron.IpcRenderer, path: getPathType) => {
+  return await ipcRenderer.invoke('get-path', path)
 }

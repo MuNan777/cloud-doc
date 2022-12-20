@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect } from "react"
+import React, { useState, useRef, useEffect, useCallback } from "react"
 import useKeyPress from "../../hooks/useKeyPress"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSearch, faClose } from '@fortawesome/free-solid-svg-icons'
+import useIpcRenderer from "../../hooks/useIpcRenderer"
 
 const FileSearch = (props: { title: string; onSearch: (keyword: string) => void; }) => {
   const [inputActive, setInputActive] = useState(false)
@@ -14,19 +15,26 @@ const FileSearch = (props: { title: string; onSearch: (keyword: string) => void;
     setInputActive(true)
   }
 
-  const closeSearch = () => {
+  const closeSearch = useCallback(() => {
     setValue('')
     setInputActive(false)
     props.onSearch('')
-  }
+  }, [props])
 
   useEffect(() => {
     if (enterPressed && inputActive) {
-      props.onSearch(value)
+      const timer = setTimeout(() => {
+        clearTimeout(timer)
+        props.onSearch(value)
+      }, 50)
     }
     if (escPressed && inputActive) {
       closeSearch()
     }
+  }, [closeSearch, enterPressed, escPressed, inputActive, props, value])
+
+  useIpcRenderer({
+    'search-file': startSearch
   })
 
   useEffect(() => {

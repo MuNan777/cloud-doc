@@ -1,4 +1,5 @@
-import { BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions } from 'electron'
+import { BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions, app } from 'electron'
+import { applicationMenuTemplate } from './applicationMenuTemplate'
 const ipcMainHandle: { [key: string]: (win: BrowserWindow) => unknown } = {
   contextmenu: (win: BrowserWindow) => {
     let menu: Electron.Menu | null = null
@@ -19,6 +20,15 @@ const ipcMainHandle: { [key: string]: (win: BrowserWindow) => unknown } = {
         menu.popup()
       }
     })
+  },
+  getPath: (win: BrowserWindow) => {
+    ipcMain.handle('get-path', async (event, ...args) => {
+      return app.getPath(args[0])
+    })
+  },
+  registerApplicationMenu: (win: BrowserWindow) => {
+    const menu = Menu.buildFromTemplate(applicationMenuTemplate)
+    Menu.setApplicationMenu(menu)
   }
 }
 
