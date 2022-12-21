@@ -8,10 +8,13 @@ const useContextMenu = (itemArr: MenuItemConstructorOptions[], targetSelector: s
   useEffect(() => {
     contextmenu(ipcRenderer, itemArr)
     const handleContextMenu = async (e: MouseEvent) => {
-      if (document.querySelector(targetSelector)?.contains(e.target as Node)) {
-        clickedElement.current = e.target
-        contextmenuPopup(ipcRenderer)
-      }
+      const elements = document.querySelectorAll(targetSelector)
+      elements.forEach(el => {
+        if (el && el.contains(e.target as Node)) {
+          clickedElement.current = e.target
+          contextmenuPopup(ipcRenderer)
+        }
+      })
     }
     window.addEventListener('contextmenu', handleContextMenu)
     return () => {

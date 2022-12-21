@@ -7,3 +7,4 @@ const { join } = window.require('path')
 export const SAVED_LOCATION = async () => {
   return join(await getPath(ipcRenderer, 'documents'), pkg.name)
 }
+export const RECENTLY_USED_FILES_MAX_LENGTH = 10

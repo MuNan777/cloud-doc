@@ -13,7 +13,7 @@ import { exists, mkDir, readFile, removeFile, renameFile, writeFile } from './ut
 import Store from 'electron-store'
 import './App.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
-import { SAVED_LOCATION } from './config'
+import { RECENTLY_USED_FILES_MAX_LENGTH, SAVED_LOCATION } from './config'
 import useIpcRenderer from './hooks/useIpcRenderer'
 
 const { join, dirname } = window.require('path')
@@ -45,19 +45,14 @@ function App () {
   const [activeFileId, setActiveFileId] = useState('')
   const [openedFileIds, setOpenedFileIds] = useState<string[]>([])
   const [unSavedFileIds, setUnSavedFileIds] = useState<string[]>([])
-  const [searchedFiles, setSearchedFiles] = useState<FileItem[]>([])
+  const [recentlyUsedFiles, setRecentlyUsedFiles] = useState<FileItem[]>([])
   const files = objToArr(fileMap)
   const activeFile = fileMap[activeFileId]
   const openedFiles = openedFileIds.map(openId => {
     return fileMap[openId]
   })
 
-  const fileList = (searchedFiles.length > 0) ? searchedFiles : files
-
-  const fileSearch = useCallback((keyword: string) => {
-    const newFiles = files.filter(file => file.title.includes(keyword))
-    setSearchedFiles(newFiles)
-  }, [files])
+  const fileList = files.sort((a, b) => b.createdAt - a.createdAt)
 
   const fileClick = async (fileId: string) => {
     setActiveFileId(fileId)
@@ -71,7 +66,17 @@ function App () {
       if (!openedFileIds.includes(fileId)) {
         setOpenedFileIds([...openedFileIds, fileId])
       }
+      if (recentlyUsedFiles.filter(file => file.id === fileId).length === 0) {
+        addRecentlyUsedFiles(currentFile)
+      }
     }
+  }
+
+  const addRecentlyUsedFiles = (currentFile: FileItem) => {
+    if (recentlyUsedFiles.length === RECENTLY_USED_FILES_MAX_LENGTH) {
+      recentlyUsedFiles.pop()
+    }
+    setRecentlyUsedFiles([currentFile, ...recentlyUsedFiles])
   }
 
   const deleteFile = async (id: string) => {
@@ -85,10 +90,25 @@ function App () {
         const { [id]: value, ...afterDelete } = fileMap
         setFileMap(afterDelete)
         saveFilesToStore(afterDelete)
+        clearFileCache(id)
         tabClose(id)
       }
     }
+  }
 
+  const clearFileCache = (id: string) => {
+    const newRecentlyUsedFiles = recentlyUsedFiles.filter(file => file.id !== id)
+    if (newRecentlyUsedFiles.length < recentlyUsedFiles.length) {
+      setRecentlyUsedFiles(newRecentlyUsedFiles)
+    }
+    const newOpenedFileIds = openedFileIds.filter(fileId => fileId !== id)
+    if (newOpenedFileIds.length < openedFileIds.length) {
+      setOpenedFileIds(newOpenedFileIds)
+    }
+    const newUnSavedFileIds = unSavedFileIds.filter(fileId => fileId !== id)
+    if (newUnSavedFileIds.length < unSavedFileIds.length) {
+      setUnSavedFileIds(newUnSavedFileIds)
+    }
   }
 
   const updateFileName = async (id: string, title: string, isNew: boolean) => {
@@ -164,17 +184,28 @@ function App () {
   return (
     <>
       <div className='d-flex w-100' style={{ minHeight: '100vh' }}>
-        <div style={{ width: '300px' }}>
-          <FileSearch
-            title='My Document'
-            onSearch={fileSearch}
-          />
-          <FileList
-            files={fileList}
-            onFileClick={fileClick}
-            onFileDelete={deleteFile}
-            onSaveEdit={updateFileName}
-          />
+        <div className='file-aside'>
+          <FileSearch files={files} onClick={(id) => { fileClick(id) }}></FileSearch>
+          <div className='list-title'>最近使用</div>
+          <div className='recently-used-files'>
+            <FileList
+              key={'recentlyUsedFiles'}
+              files={recentlyUsedFiles}
+              onFileClick={fileClick}
+              onFileDelete={deleteFile}
+              onSaveEdit={updateFileName}
+            />
+          </div>
+          <div className='list-title'>文件列表</div>
+          <div className='file-aside-list'>
+            <FileList
+              key={'files'}
+              files={fileList}
+              onFileClick={fileClick}
+              onFileDelete={deleteFile}
+              onSaveEdit={updateFileName}
+            />
+          </div>
           <div style={{ position: 'fixed', bottom: 0, left: 0, width: '300px' }}>
             <div className="d-flex justify-content-between align-items-center">
               <div className='w-50'>

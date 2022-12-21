@@ -1,88 +1,123 @@
 import React, { useState, useRef, useEffect, useCallback } from "react"
 import useKeyPress from "../../hooks/useKeyPress"
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faSearch, faClose } from '@fortawesome/free-solid-svg-icons'
 import useIpcRenderer from "../../hooks/useIpcRenderer"
+import './index.scss'
+import { FileItem } from "../../types"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { faMarkdown } from "@fortawesome/free-brands-svg-icons"
+import classNames from "classnames"
+import { getParentNode } from "../../utils/common"
 
-const FileSearch = (props: { title: string; onSearch: (keyword: string) => void; }) => {
+
+const FileSearch = (props: { files: FileItem[], onClick: (id: string) => void; }) => {
   const [inputActive, setInputActive] = useState(false)
   const [value, setValue] = useState('')
-  const enterPressed = useKeyPress('Enter')
   const escPressed = useKeyPress('Escape')
-  let node = useRef<null | HTMLInputElement>(null)
+  const [searchedFiles, setSearchedFiles] = useState<FileItem[]>([])
+  const node = useRef<null | HTMLDivElement>(null)
+  const inputNode = useRef<null | HTMLInputElement>(null)
 
-  const startSearch = () => {
-    setInputActive(true)
+  const showModal = () => {
+    if (node.current) {
+      node.current.classList.add('show')
+      node.current.style.display = 'block'
+    }
   }
 
-  const closeSearch = useCallback(() => {
-    setValue('')
-    setInputActive(false)
-    props.onSearch('')
-  }, [props])
+  const hideModal = () => {
+    if (node.current) {
+      node.current.classList.remove('show')
+      node.current.style.display = 'none'
+    }
+  }
 
-  useEffect(() => {
-    if (enterPressed && inputActive) {
-      const timer = setTimeout(() => {
-        clearTimeout(timer)
-        props.onSearch(value)
-      }, 50)
-    }
-    if (escPressed && inputActive) {
-      closeSearch()
-    }
-  }, [closeSearch, enterPressed, escPressed, inputActive, props, value])
+  const startSearch = () => {
+    showModal()
+    setInputActive(true)
+  }
 
   useIpcRenderer({
     'search-file': startSearch
   })
 
+  const closeSearch = useCallback(() => {
+    setValue('')
+    hideModal()
+  }, [])
+
+  const onFileClick = (id: string) => {
+    console.log(555)
+    props.onClick(id)
+    closeSearch()
+  }
+
   useEffect(() => {
-    if (inputActive && node.current != null) {
-      node.current.focus()
+    if (inputActive) {
+      setSearchedFiles(props.files.filter(file => (value !== '' && file.title.startsWith(value))))
     }
-  }, [inputActive])
+  }, [value, props.files, inputActive])
+
+  useEffect(() => {
+    if (escPressed && inputActive) {
+      closeSearch()
+    }
+  }, [closeSearch, escPressed, inputActive, props, value])
+
+  const handleClick = (e: MouseEvent) => {
+    if (!getParentNode('modal-content', e.target)) {
+      closeSearch()
+    }
+  }
+
+  useEffect(() => {
+    const input = inputNode.current
+    if (inputActive && input != null) {
+      input.focus()
+      document.addEventListener('click', handleClick)
+      return () => {
+        document.removeEventListener('click', handleClick)
+      }
+    }
+  })
 
   return (
-    <div className="alert alert-primary d-flex justify-content-between align-items-center mb-0">
-      {
-        !inputActive &&
-        <>
-          <span>{props.title}</span>
-          <button
-            type="button"
-            className="btn btn-link"
-            onClick={startSearch}
-          >
-            <FontAwesomeIcon
-              title="搜索"
-              size="lg"
-              icon={faSearch}
-            />
-          </button>
-        </>
-      }
-      {inputActive &&
-        <>
-          <input
-            className="form-control"
-            value={value}
-            ref={node}
-            onChange={(e) => { setValue(e.target.value) }}
-          />
-          <button
-            type="button"
-            className="btn btn-link"
-            onClick={closeSearch}
-          >
-            <FontAwesomeIcon
-              title="关闭"
-              size="lg"
-              icon={faClose}
-            />
-          </button>
-        </>
-      }
+    <div className="search-modal">
+      <div ref={node} className="modal" tabIndex={-1}>
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="p-2">
+              <div>
+                <input ref={inputNode} placeholder="输入文件名称" className="search-input" onChange={(e) => { setValue(e.target.value) }}></input>
+              </div>
+              <div className={classNames({ 'search-list': true, 'mt-2': searchedFiles.length > 0 })}>
+                <ul className="list-group list-group-flush file-list search-list-component">
+                  {
+                    searchedFiles.map(file => (
+                      <li
+                        key={file.id}
+                        className="list-group-item bg-light d-flex align-items-center mx-0">
+                        <span className="me-2">
+                          <FontAwesomeIcon
+                            size="lg"
+                            icon={faMarkdown}
+                          />
+                        </span>
+                        <span
+                          className="c-link"
+                          style={{ height: '1.5rem', lineHeight: '1.5rem', width: '100%' }}
+                          onClick={() => { onFileClick(file.id) }}
+                        >
+                          {file.title}
+                        </span>
+                      </li>
+                    ))
+                  }
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

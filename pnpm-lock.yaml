@@ -8,6 +8,7 @@ specifiers:
   '@testing-library/jest-dom': ^5.16.5
   '@testing-library/react': ^13.4.0
   '@testing-library/user-event': ^13.5.0
+  '@types/bootstrap': ^5.2.6
   '@types/jest': ^27.5.2
   '@types/marked': ^4.0.8
   '@types/node': ^16.18.8
@@ -64,6 +65,7 @@ devDependencies:
   '@testing-library/jest-dom': 5.16.5
   '@testing-library/react': 13.4.0_biqbaboplfbrettd7655fr4n2y
   '@testing-library/user-event': 13.5.0
+  '@types/bootstrap': 5.2.6
   '@types/jest': 27.5.2
   '@types/node': 16.18.9
   '@types/react': 18.0.26
@@ -2340,6 +2342,10 @@ packages:
       webpack-dev-server: 4.11.1_webpack@5.75.0
     dev: false
 
+  /@popperjs/core/2.11.6:
+    resolution: {integrity: sha512-50/17A98tWUfQ176raKiOGXuYpLyyVMkxxG6oylzL3BPOlA6ADGdK7EYunSa4I064xerltq9TGXs8HmOk5E+vw==}
+    dev: true
+
   /@rollup/plugin-babel/5.3.1_opjstonlpkhafnz76jsxdwq25a:
     resolution: {integrity: sha512-WFfdLWU/xVWKeRQnKmIAQULUI7Il0gZnBIH/ZFO069wYIfPu+8zrfp/KMW0atmELoRDq8FbiP3VCss9MhCut7Q==}
     engines: {node: '>= 10.0.0'}
@@ -2685,6 +2691,12 @@ packages:
     dependencies:
       '@types/node': 16.18.9
     dev: false
+
+  /@types/bootstrap/5.2.6:
+    resolution: {integrity: sha512-BlAc3YATdasbHoxMoBWODrSF6qwQO/E9X8wVxCCSa6rWjnaZfpkr2N6pUMCY6jj2+wf0muUtLySbvU9etX6YqA==}
+    dependencies:
+      '@popperjs/core': 2.11.6
+    dev: true
 
   /@types/cacheable-request/6.0.3:
     resolution: {integrity: sha512-IQ3EbTzGxIigb1I3qPZc1rWJnH0BmSKv5QYTalEwweFvyBDLSAe24zP0le/hyi7ecGfZVlIVAg4BZqb8WBwKqw==}

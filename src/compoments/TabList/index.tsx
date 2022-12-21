@@ -2,7 +2,7 @@ import { FileItem } from "../../types"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
 import classNames from 'classnames'
-import './TabList.scss'
+import './index.scss'
 
 export interface TabListProps {
   files: FileItem[],
@@ -16,7 +16,7 @@ const TabList = (props: TabListProps) => {
   const { files, activeFile, unSaveIds, onTabClick, onCloseTab } = props
   return (
     <>
-      <ul className="nav nav-tabs tablist-component">
+      <ul className="nav nav-tabs tab-list-component">
         {files.map(file => {
           const withUnsavedMark = unSaveIds.includes(file.id)
           const fClassName = classNames({

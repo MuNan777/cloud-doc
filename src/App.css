@@ -24,3 +24,56 @@ body::-webkit-scrollbar-track {
   color: #ccc;
   text-align: center;
 }
+
+.list-title {
+  height: 2rem;
+  line-height: 2rem;
+  background-color: #ccc;
+  color: #fff;
+  padding-left: 10px;
+}
+
+.file-aside {
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 38px);
+}
+
+.file-aside-list {
+  flex: 1;
+  overflow-y: scroll;
+}
+
+.file-aside-list::-webkit-scrollbar {
+  width: 6px;
+  background-color: rgb(248, 249, 250);
+}
+
+.file-aside-list::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 10px;
+}
+
+.file-aside-list:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.recently-used-files {
+  max-height: 205px;
+  overflow-y: scroll;
+}
+
+.recently-used-files::-webkit-scrollbar {
+  width: 6px;
+  background-color: rgb(248, 249, 250);
+}
+
+.recently-used-files::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 10px;
+}
+
+.recently-used-files:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+}

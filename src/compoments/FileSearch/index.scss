@@ -1,0 +1,27 @@
+.search-modal {
+  .search-input {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    height: 40px;
+    width: 100%;
+    padding-left: 5px;
+  }
+  .search-list {
+    max-height: 60vh;
+    overflow-y: scroll;
+  }
+
+  .search-list::-webkit-scrollbar {
+    width: 6px;
+    background-color: rgb(248, 249, 250);
+  }
+
+  .search-list::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    border-radius: 10px;
+  }
+
+  .search-list:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+  }
+}
