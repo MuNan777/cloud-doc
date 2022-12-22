@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions, app } from 'electron'
+import { BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions, app, dialog } from 'electron'
 import { applicationMenuTemplate } from './applicationMenuTemplate'
 const ipcMainHandle: { [key: string]: (win: BrowserWindow) => unknown } = {
   contextmenu: (win: BrowserWindow) => {
@@ -29,6 +29,18 @@ const ipcMainHandle: { [key: string]: (win: BrowserWindow) => unknown } = {
   registerApplicationMenu: (win: BrowserWindow) => {
     const menu = Menu.buildFromTemplate(applicationMenuTemplate)
     Menu.setApplicationMenu(menu)
+  },
+  showOpenDialog: (win: BrowserWindow) => {
+    ipcMain.handle('show-open-dialog', async (event, ...args) => {
+      const options = args[0] as Electron.OpenDialogOptions
+      return dialog.showOpenDialog(win, options)
+    })
+  },
+  showMessageBox: (win: BrowserWindow) => {
+    ipcMain.handle('show-message-box', async (event, ...args) => {
+      const options = args[0] as Electron.MessageBoxOptions
+      return dialog.showMessageBox(win, options)
+    })
   }
 }
 

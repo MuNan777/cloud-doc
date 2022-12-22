@@ -31,3 +31,11 @@ export const contextmenuPopup = (ipcRenderer: Electron.IpcRenderer) => {
 export const getPath = async (ipcRenderer: Electron.IpcRenderer, path: getPathType) => {
   return await ipcRenderer.invoke('get-path', path)
 }
+
+export const showOpenDialog = async (ipcRenderer: Electron.IpcRenderer, options: Electron.OpenDialogOptions) => {
+  return await ipcRenderer.invoke('show-open-dialog', options)
+}
+
+export const showMessageBox = async (ipcRenderer: Electron.IpcRenderer, options: Electron.MessageBoxOptions) => {
+  return await ipcRenderer.invoke('show-message-box', options)
+}

@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import useContextMenu from "../../hooks/useContextMenu"
 import useKeyPress from "../../hooks/useKeyPress"
 import { FileItem } from "../../types"
-import { getParentNode } from "../../utils/common"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
 import { faMarkdown } from '@fortawesome/free-brands-svg-icons'
@@ -14,6 +12,8 @@ export interface FileListArgs {
   onFileClick: (id: string) => void,
   onSaveEdit: (id: string, value: string, isNew: boolean) => void,
   onFileDelete: (id: string) => void
+  editStatus: { status: boolean | string, title: string }
+  mark: string
 }
 
 const FileList = (props: FileListArgs) => {
@@ -26,6 +26,14 @@ const FileList = (props: FileListArgs) => {
 
   const { files, onFileClick, onSaveEdit, onFileDelete } = props
 
+  useEffect(() => {
+    const { status, title } = props.editStatus
+    if (status) {
+      setEditStatus(status)
+      setValue(title)
+    }
+  }, [props.editStatus])
+
   const closeInput = useCallback((editItem: FileItem) => {
     setEditStatus(false)
     setValue('')
@@ -34,47 +42,6 @@ const FileList = (props: FileListArgs) => {
     }
   }, [onFileDelete])
 
-  const clickedItem = useContextMenu([
-    {
-      label: '打开文件',
-      click: () => {
-        const parentElement = getParentNode('file-item', clickedItem.current)
-        if (parentElement) {
-          const e = parentElement as HTMLElement
-          const id = e.dataset.id
-          if (id) {
-            onFileClick(id)
-          }
-        }
-      }
-    },
-    {
-      label: '重命名',
-      click: () => {
-        const parentElement = getParentNode('file-item', clickedItem.current)
-        if (parentElement) {
-          const e = parentElement as HTMLElement
-          const { id, title } = e.dataset
-          setEditStatus(id || false)
-          setValue(title || '')
-        }
-      }
-    },
-    {
-      label: '删除文件',
-      click: () => {
-        const parentElement = getParentNode('file-item', clickedItem.current)
-        if (parentElement) {
-          const e = parentElement as HTMLElement
-          const { id } = e.dataset
-          if (id) {
-            onFileDelete(id)
-          }
-        }
-      }
-    },
-  ], '.file-list', [files])
-
   const canCreate = useCallback(() => {
     let editItem: null | FileItem = null
     let existsFile: boolean = false
@@ -82,15 +49,24 @@ const FileList = (props: FileListArgs) => {
       const file = files[i]
       if (file.id === editStatus) {
         editItem = file
-      }
-      if (file.title === value && file.title !== '') {
-        existsFile = true
+      } else {
+        if (file.title === value && file.title !== '') {
+          existsFile = true
+        }
       }
     }
     return { editItem, existsFile }
   }, [editStatus, files, value])
 
   useEffect(() => {
+    const newFile = files.find(file => file.isNew)
+    if (newFile) {
+      setEditStatus(newFile.id)
+    }
+  }, [files])
+
+  useEffect(() => {
+    let isEnter = false
     const { editItem, existsFile } = canCreate()
     if (editItem != null) {
       if (existsFile) {
@@ -99,23 +75,14 @@ const FileList = (props: FileListArgs) => {
         setInputMessage('')
       }
       if (enterPressed && editStatus && value.trim() !== '' && !existsFile) {
+        isEnter = true
         onSaveEdit(editItem.id, value, editItem.isNew)
-        setEditStatus(false)
-        setValue('')
+        closeInput(editItem)
       }
       if (escPressed && editStatus) {
         closeInput(editItem)
       }
     }
-  }, [canCreate, closeInput, editStatus, enterPressed, escPressed, files, onSaveEdit, value])
-  useEffect(() => {
-    const newFile = files.find(file => file.isNew)
-    if (newFile) {
-      setEditStatus(newFile.id)
-      setValue(newFile.title)
-    }
-  }, [files])
-  useEffect(() => {
     const handleInputBlur = () => {
       if (value === '') {
         if (typeof editStatus === 'string') {
@@ -130,12 +97,11 @@ const FileList = (props: FileListArgs) => {
           })
         }
       } else {
-        if (editStatus) {
+        if (editStatus && !isEnter) {
           const { editItem, existsFile } = canCreate()
           if (editItem && !existsFile) {
             onSaveEdit(editItem.id, value, editItem.isNew)
-            setEditStatus(false)
-            setValue('')
+            closeInput(editItem)
           }
         }
       }
@@ -148,8 +114,7 @@ const FileList = (props: FileListArgs) => {
         n.removeEventListener('blur', handleInputBlur)
       }
     }
-
-  }, [canCreate, closeInput, editStatus, onSaveEdit, value])
+  }, [canCreate, closeInput, editStatus, enterPressed, escPressed, onSaveEdit, value])
 
   return (
     <ul className="list-group list-group-flush file-list file-list-component">
@@ -160,6 +125,7 @@ const FileList = (props: FileListArgs) => {
             key={file.id}
             data-id={file.id}
             data-title={file.title}
+            data-mark={props.mark}
           >
             {
               (file.id !== editStatus && !file.isNew) &&

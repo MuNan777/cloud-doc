@@ -1,26 +1,31 @@
 import React, { useCallback, useState } from 'react'
-import FileSearch from './compoments/FileSearch'
-import FileList from './compoments/FileList'
-import BottomBtn from './compoments/BottomBtn'
+import FileSearch from './components/FileSearch'
+import BottomBtn from './components/BottomBtn'
 import { faFileImport, faPlus } from '@fortawesome/free-solid-svg-icons'
-import TabList from './compoments/TabList'
+import TabList from './components/TabList'
 import { FileItem } from './types'
 import SimpleMDE from "react-simplemde-editor"
-import "easymde/dist/easymde.min.css"
-import { getPreviewRender, objToArr } from './utils/common'
+import { flattenArr, getPreviewRender, objToArr } from './utils/common'
 import { v4 as uuidV4 } from 'uuid'
 import { exists, mkDir, readFile, removeFile, renameFile, writeFile } from './utils/fileHelper'
 import Store from 'electron-store'
-import './App.css'
-import 'bootstrap/dist/css/bootstrap.min.css'
 import { RECENTLY_USED_FILES_MAX_LENGTH, SAVED_LOCATION } from './config'
 import useIpcRenderer from './hooks/useIpcRenderer'
+import useFileListsWithContext from './hooks/useFileListsWithContext'
+import './App.css'
+import 'bootstrap/dist/css/bootstrap.min.css'
+import "easymde/dist/easymde.min.css"
+import { showMessageBox, showOpenDialog } from './ipc/ipcRenderer'
+import { ipcRenderer } from 'electron'
+import { basename, extname } from 'path'
 
 const { join, dirname } = window.require('path')
 
 export interface FileMapProps { [key: string]: FileItem }
 
 const fileStore = new Store<Record<string, FileMapProps>>({ 'name': 'Files Data' })
+
+const ruIdsStore = new Store<Record<string, string[]>>({ 'name': 'Recently Used File Ids' })
 
 const saveFilesToStore = (fileMap: FileMapProps) => {
   const fileStoreObj = objToArr(fileMap).reduce<{ [key: string]: FileItem }>((result, file) => {
@@ -45,11 +50,14 @@ function App () {
   const [activeFileId, setActiveFileId] = useState('')
   const [openedFileIds, setOpenedFileIds] = useState<string[]>([])
   const [unSavedFileIds, setUnSavedFileIds] = useState<string[]>([])
-  const [recentlyUsedFiles, setRecentlyUsedFiles] = useState<FileItem[]>([])
+  const [recentlyUsedFileIds, setRecentlyUsedFileIds] = useState<string[]>(ruIdsStore.get('ids') || [])
   const files = objToArr(fileMap)
   const activeFile = fileMap[activeFileId]
   const openedFiles = openedFileIds.map(openId => {
     return fileMap[openId]
+  })
+  const recentlyUsedFiles = recentlyUsedFileIds.map(id => {
+    return fileMap[id]
   })
 
   const fileList = files.sort((a, b) => b.createdAt - a.createdAt)
@@ -66,17 +74,19 @@ function App () {
       if (!openedFileIds.includes(fileId)) {
         setOpenedFileIds([...openedFileIds, fileId])
       }
-      if (recentlyUsedFiles.filter(file => file.id === fileId).length === 0) {
-        addRecentlyUsedFiles(currentFile)
+      if (recentlyUsedFileIds.filter(id => id === fileId).length === 0) {
+        addRecentlyUsedFiles(fileId)
       }
     }
   }
 
-  const addRecentlyUsedFiles = (currentFile: FileItem) => {
-    if (recentlyUsedFiles.length === RECENTLY_USED_FILES_MAX_LENGTH) {
-      recentlyUsedFiles.pop()
+  const addRecentlyUsedFiles = (id: string) => {
+    if (recentlyUsedFileIds.length === RECENTLY_USED_FILES_MAX_LENGTH) {
+      recentlyUsedFileIds.pop()
     }
-    setRecentlyUsedFiles([currentFile, ...recentlyUsedFiles])
+    const newRuIds = [id, ...recentlyUsedFileIds]
+    setRecentlyUsedFileIds(newRuIds)
+    ruIdsStore.set('ids', newRuIds)
   }
 
   const deleteFile = async (id: string) => {
@@ -86,7 +96,17 @@ function App () {
         const { [id]: value, ...afterDelete } = fileMap
         setFileMap(afterDelete)
       } else {
-        await removeFile(item.path)
+        const data = await showMessageBox(ipcRenderer, {
+          type: 'info',
+          buttons: ['不删除', '删除'],
+          title: "提示",
+          message: `是否同时删除源文件？${item.path}`,
+          defaultId: 0,
+          cancelId: 0
+        })
+        if (data.response) {
+          await removeFile(item.path)
+        }
         const { [id]: value, ...afterDelete } = fileMap
         setFileMap(afterDelete)
         saveFilesToStore(afterDelete)
@@ -97,9 +117,10 @@ function App () {
   }
 
   const clearFileCache = (id: string) => {
-    const newRecentlyUsedFiles = recentlyUsedFiles.filter(file => file.id !== id)
-    if (newRecentlyUsedFiles.length < recentlyUsedFiles.length) {
-      setRecentlyUsedFiles(newRecentlyUsedFiles)
+    const newRecentlyUsedFileIds = recentlyUsedFileIds.filter(fileId => fileId !== id)
+    if (newRecentlyUsedFileIds.length < recentlyUsedFileIds.length) {
+      setRecentlyUsedFileIds(newRecentlyUsedFileIds)
+      ruIdsStore.set('ids', newRecentlyUsedFileIds)
     }
     const newOpenedFileIds = openedFileIds.filter(fileId => fileId !== id)
     if (newOpenedFileIds.length < openedFileIds.length) {
@@ -143,7 +164,44 @@ function App () {
     setFileMap({ ...fileMap, [newId]: newFile })
   }
 
-  const importFiles = () => { }
+  const importFiles = async () => {
+    const data = await showOpenDialog(ipcRenderer, {
+      title: '选择导入的 Markdown 文件',
+      properties: ['openFile', 'multiSelections'],
+      filters: [
+        { name: 'Markdown files', extensions: ['md'] }
+      ]
+    })
+    if (data && Array.isArray(data.filePaths)) {
+      const paths = data.filePaths as Array<string>
+      const filteredPaths = paths.filter(path => {
+        const already = fileList.find(file => file.path === path)
+        return !already
+      })
+      const importFilesArr = filteredPaths.map(path => {
+        return {
+          id: uuidV4(),
+          title: `${basename(path, extname(path))} (import)`,
+          path,
+          body: '',
+          createdAt: new Date().getTime(),
+          isNew: false,
+          isLoaded: false
+        }
+      })
+
+      const newFiles = { ...fileMap, ...flattenArr(importFilesArr) }
+      setFileMap(newFiles)
+      saveFilesToStore(newFiles)
+      if (importFilesArr.length > 0) {
+        showMessageBox(ipcRenderer, {
+          type: 'info',
+          title: `导入成功`,
+          message: `导入了${importFilesArr.length}个文件`,
+        })
+      }
+    }
+  }
 
   const tabClick = (fileId: string) => {
     setActiveFileId(fileId)
@@ -181,30 +239,27 @@ function App () {
     'create-new-file': createNewFile
   })
 
+  const [ruFileList, flFileList] = useFileListsWithContext({
+    files,
+    onFileClick: fileClick,
+    onSaveEdit: updateFileName,
+    onFileDelete: deleteFile,
+    markAndFiles: [{ mark: 'ru', files: recentlyUsedFiles }, { mark: 'fl', files: fileList }]
+  })
+
   return (
     <>
       <div className='d-flex w-100' style={{ minHeight: '100vh' }}>
         <div className='file-aside'>
           <FileSearch files={files} onClick={(id) => { fileClick(id) }}></FileSearch>
-          <div className='list-title'>最近使用</div>
-          <div className='recently-used-files'>
-            <FileList
-              key={'recentlyUsedFiles'}
-              files={recentlyUsedFiles}
-              onFileClick={fileClick}
-              onFileDelete={deleteFile}
-              onSaveEdit={updateFileName}
-            />
-          </div>
+          {recentlyUsedFileIds.length > 0 && <>
+            <div className='list-title'>最近使用</div>
+            <div className='recently-used-files'>
+              {ruFileList}
+            </div></>}
           <div className='list-title'>文件列表</div>
           <div className='file-aside-list'>
-            <FileList
-              key={'files'}
-              files={fileList}
-              onFileClick={fileClick}
-              onFileDelete={deleteFile}
-              onSaveEdit={updateFileName}
-            />
+            {flFileList}
           </div>
           <div style={{ position: 'fixed', bottom: 0, left: 0, width: '300px' }}>
             <div className="d-flex justify-content-between align-items-center">
@@ -247,6 +302,7 @@ function App () {
                 value={activeFile.body}
                 onChange={onFileChange}
                 options={{
+                  autofocus: true,
                   minHeight: '482px',
                   previewRender: getPreviewRender(),
                 }}

@@ -43,6 +43,7 @@ body::-webkit-scrollbar-track {
 .file-aside-list {
   flex: 1;
   overflow-y: scroll;
+  background-color: rgb(248, 249, 250);
 }
 
 .file-aside-list::-webkit-scrollbar {
