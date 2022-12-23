@@ -10,7 +10,7 @@ import { getParentNode } from "../../utils/common"
 
 
 const FileSearch = (props: { files: FileItem[], onClick: (id: string) => void; }) => {
-  const [inputActive, setInputActive] = useState(false)
+  const [isShow, setIsShow] = useState(false)
   const [value, setValue] = useState('')
   const escPressed = useKeyPress('Escape')
   const [searchedFiles, setSearchedFiles] = useState<FileItem[]>([])
@@ -18,22 +18,23 @@ const FileSearch = (props: { files: FileItem[], onClick: (id: string) => void; }
   const inputNode = useRef<null | HTMLInputElement>(null)
 
   const showModal = () => {
-    if (node.current) {
+    if (node.current && !isShow) {
       node.current.classList.add('show')
       node.current.style.display = 'block'
+      setIsShow(true)
     }
   }
 
-  const hideModal = () => {
-    if (node.current) {
+  const hideModal = useCallback(() => {
+    if (node.current && isShow) {
       node.current.classList.remove('show')
       node.current.style.display = 'none'
+      setIsShow(false)
     }
-  }
+  }, [isShow])
 
   const startSearch = () => {
     showModal()
-    setInputActive(true)
   }
 
   useIpcRenderer({
@@ -43,42 +44,39 @@ const FileSearch = (props: { files: FileItem[], onClick: (id: string) => void; }
   const closeSearch = useCallback(() => {
     setValue('')
     hideModal()
-  }, [])
+  }, [hideModal])
 
   const onFileClick = (id: string) => {
-    console.log(555)
     props.onClick(id)
     closeSearch()
   }
 
   useEffect(() => {
-    if (inputActive) {
-      setSearchedFiles(props.files.filter(file => (value !== '' && file.title.startsWith(value))))
-    }
-  }, [value, props.files, inputActive])
+    setSearchedFiles(props.files.filter(file => (value !== '' && file.title.startsWith(value))))
+  }, [value, props.files])
 
   useEffect(() => {
-    if (escPressed && inputActive) {
+    if (escPressed) {
       closeSearch()
     }
-  }, [closeSearch, escPressed, inputActive, props, value])
+  }, [closeSearch, escPressed, props, value])
 
-  const handleClick = (e: MouseEvent) => {
+  const handleClick = useCallback((e: MouseEvent) => {
     if (!getParentNode('modal-content', e.target)) {
       closeSearch()
     }
-  }
+  }, [closeSearch])
 
   useEffect(() => {
     const input = inputNode.current
-    if (inputActive && input != null) {
+    if (input != null && isShow) {
       input.focus()
       document.addEventListener('click', handleClick)
       return () => {
         document.removeEventListener('click', handleClick)
       }
     }
-  })
+  }, [handleClick, isShow])
 
   return (
     <div className="search-modal">

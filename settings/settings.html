@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>设置</title>
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self' 'unsafe-inline';"
+    />
+    <link
+      rel="stylesheet"
+      href="../node_modules/bootstrap/dist/css/bootstrap.min.css"
+    />
+    <link rel="stylesheet" href="./settings.css" />
+  </head>
+  <body>
+    <div class="mx-3 mt-4">
+      <h5>设置</h5>
+      <form id="settings-form">
+        <ul class="nav nav-tabs">
+          <li class="nav-item">
+            <a
+              class="nav-link active"
+              href="#"
+              data-tab="#config-file-location"
+            >
+              文件存储位置
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" data-tab="#qiniu-sync-params">
+              腾讯云同步
+            </a>
+          </li>
+        </ul>
+        <div id="config-file-location" class="config-area mt-4">
+          <div class="form-group">
+            <label for="exampleInputPassword1">选择文件存储位置</label>
+            <div class="input-group mb-2">
+              <input
+                type="text"
+                id="savedFileLocation"
+                class="form-control"
+                placeholder="当前存储地址"
+                readonly
+              />
+              <div class="input-group-append">
+                <button
+                  class="btn btn-outline-primary"
+                  type="button"
+                  id="select-new-location"
+                >
+                  选择新的位置
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="qiniu-sync-params" class="config-area mt-4">
+          <div class="form-group row">
+            <label for="secretId" class="col-3 col-form-label">
+              Secret Id
+            </label>
+            <div class="col-9">
+              <input
+                type="text"
+                class="form-control"
+                id="secretId"
+                placeholder="Secret Id"
+              />
+              <small id="acHelp" class="form-text text-muted">
+                请在腾讯云密钥管理下查看
+              </small>
+            </div>
+          </div>
+          <div class="form-group row">
+            <label for="secretKey" class="col-3 col-form-label">
+              Secret Key
+            </label>
+            <div class="col-9">
+              <input
+                type="password"
+                class="form-control"
+                id="secretKey"
+                placeholder="Secret Key"
+              />
+              <small id="skHelp" class="form-text text-muted">
+                请在腾讯云密钥管理下查看
+              </small>
+            </div>
+          </div>
+          <div class="form-group row">
+            <label for="bucketName" class="col-3 col-form-label">
+              Bucket 名称
+            </label>
+            <div class="col-9">
+              <input
+                type="text"
+                class="form-control"
+                id="bucketName"
+                placeholder="请输入 Bucket 名称"
+              />
+              <small id="skHelp" class="form-text text-muted">
+                请在腾讯云对象存储管理下查看
+              </small>
+            </div>
+          </div>
+          <div class="form-group row">
+            <label for="regionName" class="col-3 col-form-label">
+              Bucket 所在区域
+            </label>
+            <div class="col-9">
+              <input
+                type="text"
+                class="form-control"
+                id="regionName"
+                placeholder="请输入 Bucket 所在区域"
+              />
+              <small id="skHelp" class="form-text text-muted">
+                请在腾讯云对象存储管理下查看
+              </small>
+            </div>
+          </div>
+        </div>
+        <button
+          type="submit"
+          class="btn btn-primary mt-2"
+          style="float: right; width: 122px"
+        >
+          保存
+        </button>
+      </form>
+    </div>
+    <script src="./settings.js"></script>
+  </body>
+</html>

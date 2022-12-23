@@ -1,13 +1,14 @@
-import { app, BrowserWindow } from 'electron'
+import { app, ipcMain } from 'electron'
 import isDev from 'electron-is-dev'
 import path from 'path'
-import { loadIpcMainHandle } from './ipc/ipcMainHandle'
+import { loadIpcMainHandle, setWindowMap } from './ipc/ipcMainHandle'
 import Store from 'electron-store'
+import { AppWindow } from './common'
 
 const urlLocation = isDev ? 'http://localhost:3000' : 'dummyUrl'
 
 const createWindow = () => {
-  const main = new BrowserWindow({
+  let mainWindow: AppWindow | null = new AppWindow({
     width: 1024,
     height: 690,
     webPreferences: {
@@ -15,13 +16,36 @@ const createWindow = () => {
       nodeIntegration: true,
       contextIsolation: false,
     }
+  }, urlLocation)
+  mainWindow.on('closed', () => {
+    mainWindow = null
   })
+  setWindowMap('main', mainWindow)
 
   Store.initRenderer()
 
-  loadIpcMainHandle(main)
+  loadIpcMainHandle()
 
-  main.loadURL(urlLocation)
+  ipcMain.on('open-settings-window', () => {
+    if (mainWindow) {
+      const settingsWindowConfig = {
+        width: 650,
+        height: 480,
+        parent: mainWindow,
+        webPreferences: {
+          nodeIntegration: true,
+          contextIsolation: false,
+        }
+      }
+      const settingsFileLocation = `file://${path.join(__dirname, './settings/settings.html')}`
+      let settingsWindow: AppWindow | null = new AppWindow(settingsWindowConfig, settingsFileLocation)
+      settingsWindow.removeMenu()
+      settingsWindow.on('closed', () => {
+        settingsWindow = null
+      })
+      setWindowMap('settings', settingsWindow)
+    }
+  })
 }
 
 app.whenReady().then(() => {

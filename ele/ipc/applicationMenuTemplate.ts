@@ -1,6 +1,6 @@
-import { shell } from "electron"
+import { app, ipcMain, shell } from "electron"
 
-export const applicationMenuTemplate: Electron.MenuItemConstructorOptions[] = [{
+const applicationMenuTemplate: Electron.MenuItemConstructorOptions[] = [{
   label: '文件',
   submenu: [{
     label: '新建',
@@ -27,6 +27,38 @@ export const applicationMenuTemplate: Electron.MenuItemConstructorOptions[] = [{
       browserWindow?.webContents.send('import-file')
     }
   }]
+},
+{
+  label: '编辑',
+  submenu: [
+    {
+      label: '撤销',
+      accelerator: 'CmdOrCtrl+Z',
+      role: 'undo'
+    }, {
+      label: '重做',
+      accelerator: 'Shift+CmdOrCtrl+Z',
+      role: 'redo'
+    }, {
+      type: 'separator'
+    }, {
+      label: '剪切',
+      accelerator: 'CmdOrCtrl+X',
+      role: 'cut'
+    }, {
+      label: '复制',
+      accelerator: 'CmdOrCtrl+C',
+      role: 'copy'
+    }, {
+      label: '粘贴',
+      accelerator: 'CmdOrCtrl+V',
+      role: 'paste'
+    }, {
+      label: '全选',
+      accelerator: 'CmdOrCtrl+A',
+      role: 'selectAll'
+    }
+  ]
 },
 {
   label: '视图',
@@ -87,3 +119,65 @@ export const applicationMenuTemplate: Electron.MenuItemConstructorOptions[] = [{
     },
   ]
 }]
+
+if (process.platform === 'darwin') {
+  const name = app.getName()
+  applicationMenuTemplate.unshift({
+    label: name,
+    submenu: [{
+      label: `关于 ${name}`,
+      role: 'about'
+    }, {
+      type: 'separator'
+    }, {
+      label: '设置',
+      accelerator: 'Command+,',
+      click: () => {
+        ipcMain.emit('open-settings-window')
+      }
+    }, {
+      label: '服务',
+      role: 'services',
+      submenu: []
+    }, {
+      type: 'separator'
+    }, {
+      label: `隐藏 ${name}`,
+      accelerator: 'Command+H',
+      role: 'hide'
+    }, {
+      label: '隐藏其它',
+      accelerator: 'Command+Alt+H',
+      role: 'hideOthers'
+    }, {
+      label: '显示全部',
+      role: 'unhide'
+    }, {
+      type: 'separator'
+    }, {
+      label: '退出',
+      accelerator: 'Command+Q',
+      click: () => {
+        app.quit()
+      }
+    }]
+  })
+} else {
+  const fMenu = applicationMenuTemplate[0]
+  if (
+    fMenu &&
+    fMenu.submenu &&
+    Array.isArray(fMenu.submenu)
+  ) {
+    fMenu.submenu.push({
+      label: '设置',
+      accelerator: 'Ctrl+,',
+      click: () => {
+        ipcMain.emit('open-settings-window')
+      }
+    })
+  }
+
+}
+
+export default applicationMenuTemplate

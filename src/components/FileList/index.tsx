@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react"
-import useKeyPress from "../../hooks/useKeyPress"
-import { FileItem } from "../../types"
+import { useCallback, useEffect, useRef, useState } from 'react'
+import useKeyPress from '../../hooks/useKeyPress'
+import { FileItem } from '../../types'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
 import { faMarkdown } from '@fortawesome/free-brands-svg-icons'
@@ -89,11 +89,12 @@ const FileList = (props: FileListArgs) => {
           closeInput({
             id: editStatus,
             isNew: true,
-            title: "",
-            body: "",
-            path: "",
+            title: '',
+            body: '',
+            path: '',
             createdAt: 0,
-            isLoaded: false
+            isLoaded: false,
+            originBody: ''
           })
         }
       } else {
@@ -117,27 +118,28 @@ const FileList = (props: FileListArgs) => {
   }, [canCreate, closeInput, editStatus, enterPressed, escPressed, onSaveEdit, value])
 
   return (
-    <ul className="list-group list-group-flush file-list file-list-component">
+    <ul className='list-group list-group-flush file-list file-list-component'>
       {
         files.map(file => (
           <li
-            className="list-group-item bg-light d-flex align-items-center file-item mx-0"
+            className='list-group-item bg-light d-flex align-items-center file-item mx-0'
             key={file.id}
             data-id={file.id}
             data-title={file.title}
+            data-path={file.path}
             data-mark={props.mark}
           >
             {
               (file.id !== editStatus && !file.isNew) &&
               <>
-                <span className="me-2">
+                <span className='me-2'>
                   <FontAwesomeIcon
-                    size="lg"
+                    size='lg'
                     icon={faMarkdown}
                   />
                 </span>
                 <span
-                  className="c-link"
+                  className='c-link'
                   style={{ height: '1.5rem', lineHeight: '1.5rem', width: '100%' }}
                   onClick={() => { onFileClick(file.id) }}
                 >
@@ -150,29 +152,29 @@ const FileList = (props: FileListArgs) => {
               <>
                 <div style={{ position: 'relative' }} >
                   <input
-                    className={classNames({ "form-control": true, 'error': inputMessage !== '' })}
+                    className={classNames({ 'form-control': true, 'error': inputMessage !== '' })}
                     ref={node}
                     value={value}
-                    placeholder="请输入文件名称"
+                    placeholder='请输入文件名称'
                     onChange={(e) => { setValue(e.target.value) }}
                   />
                   {
                     inputMessage !== '' &&
                     <>
-                      <div className="input-message">{inputMessage}</div>
+                      <div className='input-message'>{inputMessage}</div>
                     </>
                   }
                 </div>
 
                 <button
-                  type="button"
-                  className="icon-button bg-light border-0 ms-1"
+                  type='button'
+                  className='icon-button bg-light border-0 ms-1'
                   onClick={() => { closeInput(file) }}
                 >
                   <FontAwesomeIcon
-                    title="关闭"
-                    size="lg"
-                    className="btn btn-link"
+                    title='关闭'
+                    size='lg'
+                    className='btn btn-link'
                     icon={faTimes}
                   />
                 </button>

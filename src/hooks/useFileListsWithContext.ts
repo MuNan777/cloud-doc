@@ -3,6 +3,7 @@ import { FileItem } from "../types"
 import { getParentNode } from "../utils/common"
 import useContextMenu from "./useContextMenu"
 import FileList from '../components/FileList'
+import { shell } from "electron"
 
 
 export interface EditStateProps { status: boolean | string, title: string }
@@ -49,6 +50,19 @@ const useFileListsWithContext = (props: FileListArgs) => {
           const { id, title, mark } = e.dataset
           if (mark) {
             setEditStateMap({ ...editStateMap, [mark]: { status: id || false, title: title || '' } })
+          }
+        }
+      }
+    },
+    {
+      label: '打开文件所在位置',
+      click: () => {
+        const parentElement = getParentNode('file-item', clickedItem.current)
+        if (parentElement) {
+          const e = parentElement as HTMLElement
+          const { path } = e.dataset
+          if (path) {
+            shell.showItemInFolder(path)
           }
         }
       }

@@ -1,10 +1,10 @@
-import { MenuItemConstructorOptions } from "electron";
+import { ipcRenderer, MenuItemConstructorOptions } from "electron";
 import { getPathType } from "../types";
 
 let id = 0
 
 
-export const contextmenu = (ipcRenderer: Electron.IpcRenderer, menuItems: MenuItemConstructorOptions[]) => {
+export const contextmenu = (menuItems: MenuItemConstructorOptions[]) => {
   const menuClickMap = new Map<Number, Function>()
   const items = []
   for (let menuItem of menuItems) {
@@ -24,18 +24,18 @@ export const contextmenu = (ipcRenderer: Electron.IpcRenderer, menuItems: MenuIt
   })
 }
 
-export const contextmenuPopup = (ipcRenderer: Electron.IpcRenderer) => {
+export const contextmenuPopup = () => {
   ipcRenderer.invoke('contextmenu-popup')
 }
 
-export const getPath = async (ipcRenderer: Electron.IpcRenderer, path: getPathType) => {
+export const getPath = async (path: getPathType) => {
   return await ipcRenderer.invoke('get-path', path)
 }
 
-export const showOpenDialog = async (ipcRenderer: Electron.IpcRenderer, options: Electron.OpenDialogOptions) => {
+export const showOpenDialog = async (options: Electron.OpenDialogOptions) => {
   return await ipcRenderer.invoke('show-open-dialog', options)
 }
 
-export const showMessageBox = async (ipcRenderer: Electron.IpcRenderer, options: Electron.MessageBoxOptions) => {
-  return await ipcRenderer.invoke('show-message-box', options)
+export const showMessageBox = async (options: Electron.MessageBoxOptions, windowName?: string) => {
+  return await ipcRenderer.invoke('show-message-box', options, windowName)
 }

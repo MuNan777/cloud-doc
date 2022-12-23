@@ -16,7 +16,6 @@ import './App.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import "easymde/dist/easymde.min.css"
 import { showMessageBox, showOpenDialog } from './ipc/ipcRenderer'
-import { ipcRenderer } from 'electron'
 import { basename, extname } from 'path'
 
 const { join, dirname } = window.require('path')
@@ -31,7 +30,7 @@ const saveFilesToStore = (fileMap: FileMapProps) => {
   const fileStoreObj = objToArr(fileMap).reduce<{ [key: string]: FileItem }>((result, file) => {
     const { id, path, title, createdAt } = file
     result[id] = {
-      id, path, title, createdAt, body: '', isNew: false, isLoaded: false
+      id, path, title, createdAt, body: '', isNew: false, isLoaded: false, originBody: ''
     }
     return result
   }, {})
@@ -68,7 +67,7 @@ function App () {
     if (currentFile) {
       if (!currentFile.isLoaded) {
         const value = await readFile(currentFile.path)
-        const newFile = { ...fileMap[fileId], body: String(value), isLoaded: true }
+        const newFile = { ...fileMap[fileId], body: String(value), isLoaded: true, originBody: String(value) }
         setFileMap({ ...fileMap, [fileId]: newFile })
       }
       if (!openedFileIds.includes(fileId)) {
@@ -96,22 +95,24 @@ function App () {
         const { [id]: value, ...afterDelete } = fileMap
         setFileMap(afterDelete)
       } else {
-        const data = await showMessageBox(ipcRenderer, {
+        const data = await showMessageBox({
           type: 'info',
-          buttons: ['不删除', '删除'],
+          buttons: ['取消', '确定删除', '确定删除, 同时删除源文件'],
           title: "提示",
-          message: `是否同时删除源文件？${item.path}`,
+          message: `是否确定删除？`,
           defaultId: 0,
           cancelId: 0
         })
-        if (data.response) {
-          await removeFile(item.path)
+        if (data.response !== 0) {
+          if (data.response === 2) {
+            await removeFile(item.path)
+          }
+          const { [id]: value, ...afterDelete } = fileMap
+          setFileMap(afterDelete)
+          saveFilesToStore(afterDelete)
+          clearFileCache(id)
+          tabClose(id)
         }
-        const { [id]: value, ...afterDelete } = fileMap
-        setFileMap(afterDelete)
-        saveFilesToStore(afterDelete)
-        clearFileCache(id)
-        tabClose(id)
       }
     }
   }
@@ -159,13 +160,14 @@ function App () {
       path: '',
       createdAt: new Date().getTime(),
       isNew: true,
-      isLoaded: false
+      isLoaded: false,
+      originBody: '## 请编写 Markdown'
     }
     setFileMap({ ...fileMap, [newId]: newFile })
   }
 
   const importFiles = async () => {
-    const data = await showOpenDialog(ipcRenderer, {
+    const data = await showOpenDialog({
       title: '选择导入的 Markdown 文件',
       properties: ['openFile', 'multiSelections'],
       filters: [
@@ -186,7 +188,8 @@ function App () {
           body: '',
           createdAt: new Date().getTime(),
           isNew: false,
-          isLoaded: false
+          isLoaded: false,
+          originBody: ''
         }
       })
 
@@ -194,7 +197,7 @@ function App () {
       setFileMap(newFiles)
       saveFilesToStore(newFiles)
       if (importFilesArr.length > 0) {
-        showMessageBox(ipcRenderer, {
+        showMessageBox({
           type: 'info',
           title: `导入成功`,
           message: `导入了${importFilesArr.length}个文件`,
@@ -226,17 +229,23 @@ function App () {
         setUnSavedFileIds([...unSavedFileIds, activeFileId])
       }
     }
-  }, [activeFileId, fileMap, unSavedFileIds])
+    if (value === fileMap[activeFileId].originBody) {
+      setUnSavedFileIds(unSavedFileIds.filter(id => id !== activeFile.id))
+    }
+  }, [activeFile, activeFileId, fileMap, unSavedFileIds])
 
   const saveCurrentFile = async () => {
     const { path, body } = activeFile
     await writeFile(path, body)
+    const newFile = { ...fileMap[activeFileId], originBody: body }
+    setFileMap({ ...fileMap, [activeFileId]: newFile })
     setUnSavedFileIds(unSavedFileIds.filter(id => id !== activeFile.id))
   }
 
   useIpcRenderer({
     'save-edit-file': saveCurrentFile,
-    'create-new-file': createNewFile
+    'create-new-file': createNewFile,
+    'import-file': importFiles
   })
 
   const [ruFileList, flFileList] = useFileListsWithContext({
