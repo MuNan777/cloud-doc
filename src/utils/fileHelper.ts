@@ -1,7 +1,7 @@
 const fs = window.require('fs').promises
 
 export const readFile = (path: string) => {
-  return fs.readFile(path)
+  return fs.readFile(path, { encoding: 'utf8' })
 }
 export const writeFile = (path: string, content: string | NodeJS.ArrayBufferView) => {
   return fs.writeFile(path, content, { encoding: 'utf8' })

@@ -104,3 +104,8 @@ function removeListStyleWhenCheckbox (htmlText: string) {
 
   return htmlDoc.documentElement.innerHTML;
 }
+
+export const timestampToString = (timestamp: number) => {
+  const date = new Date(timestamp)
+  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
+}

@@ -1,4 +1,9 @@
 import { app, ipcMain, shell } from "electron"
+import Store from 'electron-store'
+
+const settingsStore = new Store({ name: 'Settings' })
+const CosIsConfig = ['secretId', 'secretKey', 'bucketName', 'regionName'].every(key => !!settingsStore.get(key))
+let enableAutoSync = settingsStore.get('enableAutoSync') as boolean
 
 const applicationMenuTemplate: Electron.MenuItemConstructorOptions[] = [{
   label: '文件',
@@ -59,6 +64,37 @@ const applicationMenuTemplate: Electron.MenuItemConstructorOptions[] = [{
       role: 'selectAll'
     }
   ]
+},
+
+{
+  label: '云同步',
+  submenu: [{
+    label: '设置',
+    accelerator: 'CmdOrCtrl+,',
+    click: () => {
+      ipcMain.emit('open-settings-window')
+    }
+  }, {
+    label: '自动同步',
+    type: 'checkbox',
+    enabled: CosIsConfig,
+    checked: enableAutoSync,
+    click: () => {
+      settingsStore.set('enableAutoSync', !enableAutoSync)
+    }
+  }, {
+    label: '全部同步至云端',
+    enabled: CosIsConfig,
+    click: () => {
+      ipcMain.emit('upload-all-to-qiniu')
+    }
+  }, {
+    label: '从云端下载到本地',
+    enabled: CosIsConfig,
+    click: () => {
+      ipcMain.emit('download-all-from-cos')
+    }
+  }]
 },
 {
   label: '视图',

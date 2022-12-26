@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         settingsStore.set(id, value ? value : '')
       }
     })
+    ipcRenderer.send('config-is-saved')
     ipcRenderer.send('close-window', 'settings')
   })
   $('.nav-tabs').addEventListener('click', (e) => {

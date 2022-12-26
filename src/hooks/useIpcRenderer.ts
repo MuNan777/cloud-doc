@@ -1,7 +1,15 @@
 import { ipcRenderer } from "electron"
 import { useEffect } from "react"
 
-type keyCode = 'create-new-file' | 'save-edit-file' | 'search-file' | 'import-file'
+type keyCode =
+  'create-new-file' |
+  'save-edit-file' |
+  'search-file' |
+  'import-file' |
+  'active-file-uploaded' |
+  'loading-status' |
+  'file-downloaded' |
+  'file-downloaded-all'
 type callBackType = (event: Electron.IpcRendererEvent, ...args: any[]) => void
 
 const useIpcRenderer = (keyCallbackMap: Partial<{

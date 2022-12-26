@@ -86,16 +86,12 @@ const FileList = (props: FileListArgs) => {
     const handleInputBlur = () => {
       if (value === '') {
         if (typeof editStatus === 'string') {
-          closeInput({
+          closeInput(new FileItem({
             id: editStatus,
             isNew: true,
-            title: '',
-            body: '',
-            path: '',
             createdAt: 0,
             isLoaded: false,
-            originBody: ''
-          })
+          }))
         }
       } else {
         if (editStatus && !isEnter) {

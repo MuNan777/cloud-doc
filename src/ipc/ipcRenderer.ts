@@ -39,3 +39,10 @@ export const showOpenDialog = async (options: Electron.OpenDialogOptions) => {
 export const showMessageBox = async (options: Electron.MessageBoxOptions, windowName?: string) => {
   return await ipcRenderer.invoke('show-message-box', options, windowName)
 }
+
+export const uploadFile = async (key: string, path: string) => {
+  return await ipcRenderer.invoke('upload-file', key, path)
+}
+export const downloadFile = (title: string, path: string, id: string) => {
+  ipcRenderer.send('download-file', `${title}.md`, path, id)
+}

@@ -5,7 +5,7 @@ import { faFileImport, faPlus } from '@fortawesome/free-solid-svg-icons'
 import TabList from './components/TabList'
 import { FileItem } from './types'
 import SimpleMDE from "react-simplemde-editor"
-import { flattenArr, getPreviewRender, objToArr } from './utils/common'
+import { flattenArr, getPreviewRender, objToArr, timestampToString } from './utils/common'
 import { v4 as uuidV4 } from 'uuid'
 import { exists, mkDir, readFile, removeFile, renameFile, writeFile } from './utils/fileHelper'
 import Store from 'electron-store'
@@ -15,8 +15,9 @@ import useFileListsWithContext from './hooks/useFileListsWithContext'
 import './App.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import "easymde/dist/easymde.min.css"
-import { showMessageBox, showOpenDialog } from './ipc/ipcRenderer'
+import { downloadFile, showMessageBox, showOpenDialog, uploadFile } from './ipc/ipcRenderer'
 import { basename, extname } from 'path'
+import Loader from './components/Loader'
 
 const { join, dirname } = window.require('path')
 
@@ -26,23 +27,32 @@ const fileStore = new Store<Record<string, FileMapProps>>({ 'name': 'Files Data'
 
 const ruIdsStore = new Store<Record<string, string[]>>({ 'name': 'Recently Used File Ids' })
 
+
 const saveFilesToStore = (fileMap: FileMapProps) => {
   const fileStoreObj = objToArr(fileMap).reduce<{ [key: string]: FileItem }>((result, file) => {
-    const { id, path, title, createdAt } = file
-    result[id] = {
-      id, path, title, createdAt, body: '', isNew: false, isLoaded: false, originBody: ''
-    }
+    const { id, path, title, createdAt, isSynced, updatedAt } = file
+    result[id] = new FileItem({ id, path, title, createdAt, isSynced, updatedAt })
     return result
   }, {})
   fileStore.set('fileMap', fileStoreObj)
 }
 
+// fileStore.set('fileMap', {})
+// ruIdsStore.set('ids', [])
+
+let savedLocation: null | string = null;
+
 (async () => {
-  const savedLocation = await SAVED_LOCATION()
-  if (!await exists(savedLocation)) {
+  if (!savedLocation) {
+    savedLocation = await SAVED_LOCATION()
+  }
+  if (savedLocation && !await exists(savedLocation)) {
     mkDir(savedLocation)
   }
 })()
+
+const settingsStore = new Store({ name: 'Settings' })
+const getAutoSync = () => ['secretId', 'secretKey', 'bucketName', 'regionName', 'enableAutoSync'].every(key => !!settingsStore.get(key))
 
 function App () {
   const [fileMap, setFileMap] = useState<FileMapProps>(fileStore.get('fileMap') || {})
@@ -50,6 +60,7 @@ function App () {
   const [openedFileIds, setOpenedFileIds] = useState<string[]>([])
   const [unSavedFileIds, setUnSavedFileIds] = useState<string[]>([])
   const [recentlyUsedFileIds, setRecentlyUsedFileIds] = useState<string[]>(ruIdsStore.get('ids') || [])
+  const [isLoading, setLoading] = useState(false)
   const files = objToArr(fileMap)
   const activeFile = fileMap[activeFileId]
   const openedFiles = openedFileIds.map(openId => {
@@ -65,10 +76,15 @@ function App () {
     setActiveFileId(fileId)
     const currentFile = fileMap[fileId]
     if (currentFile) {
-      if (!currentFile.isLoaded) {
-        const value = await readFile(currentFile.path)
-        const newFile = { ...fileMap[fileId], body: String(value), isLoaded: true, originBody: String(value) }
-        setFileMap({ ...fileMap, [fileId]: newFile })
+      const { isLoaded, title, path } = currentFile
+      if (!isLoaded) {
+        if (getAutoSync()) {
+          downloadFile(title, path, fileId)
+        } else {
+          const value = await readFile(currentFile.path)
+          const newFile = { ...fileMap[fileId], body: value, isLoaded: true, originBody: value }
+          setFileMap({ ...fileMap, [fileId]: newFile })
+        }
       }
       if (!openedFileIds.includes(fileId)) {
         setOpenedFileIds([...openedFileIds, fileId])
@@ -134,8 +150,11 @@ function App () {
   }
 
   const updateFileName = async (id: string, title: string, isNew: boolean) => {
+    if (!savedLocation) {
+      savedLocation = await SAVED_LOCATION()
+    }
     const newPath = isNew ?
-      join(await SAVED_LOCATION(), `${title}.md`) :
+      join(savedLocation, `${title}.md`) :
       join(dirname(fileMap[id].path), `${title}.md`)
     const modifiedFile = { ...fileMap[id], title, isNew: false, path: newPath }
     const newFileMap = { ...fileMap, [id]: modifiedFile }
@@ -153,16 +172,12 @@ function App () {
 
   const createNewFile = () => {
     const newId = uuidV4()
-    const newFile = {
+    const newFile = new FileItem({
       id: newId,
-      title: '',
-      body: '## 请编写 Markdown',
-      path: '',
+      body: '## 请输出 Markdown',
       createdAt: new Date().getTime(),
       isNew: true,
-      isLoaded: false,
-      originBody: '## 请编写 Markdown'
-    }
+    })
     setFileMap({ ...fileMap, [newId]: newFile })
   }
 
@@ -181,16 +196,12 @@ function App () {
         return !already
       })
       const importFilesArr = filteredPaths.map(path => {
-        return {
+        return new FileItem({
           id: uuidV4(),
           title: `${basename(path, extname(path))} (import)`,
           path,
-          body: '',
           createdAt: new Date().getTime(),
-          isNew: false,
-          isLoaded: false,
-          originBody: ''
-        }
+        })
       })
 
       const newFiles = { ...fileMap, ...flattenArr(importFilesArr) }
@@ -235,17 +246,75 @@ function App () {
   }, [activeFile, activeFileId, fileMap, unSavedFileIds])
 
   const saveCurrentFile = async () => {
-    const { path, body } = activeFile
+    const { title, path, body } = activeFile
     await writeFile(path, body)
+    if (getAutoSync()) {
+      uploadFile(`${title}.md`, path)
+    }
     const newFile = { ...fileMap[activeFileId], originBody: body }
     setFileMap({ ...fileMap, [activeFileId]: newFile })
     setUnSavedFileIds(unSavedFileIds.filter(id => id !== activeFile.id))
   }
 
+  const activeFileUploaded = () => {
+    const { id } = activeFile
+    const modifiedFile = { ...fileMap[id], isSynced: true, updatedAt: new Date().getTime() }
+    const newFiles = { ...fileMap, [id]: modifiedFile }
+    setFileMap(newFiles)
+    saveFilesToStore(newFiles)
+  }
+
+  const activeFileDownloaded = (event: Electron.IpcRendererEvent, ...args: any[]) => {
+    const [status, id] = args
+    const currentFile = fileMap[id]
+    const { path } = currentFile
+    readFile(path).then((value: string) => {
+      let newFile
+      if (status === 'download-success') {
+        newFile = { ...fileMap[id], body: value, isLoaded: true, isSynced: true, updatedAt: new Date().getTime() }
+      } else {
+        newFile = { ...fileMap[id], body: value, isLoaded: true }
+      }
+      const newFiles = { ...fileMap, [id]: newFile }
+      setFileMap(newFiles)
+      saveFilesToStore(newFiles)
+    })
+  }
+
+  const fileDownloadedAll = async (event: Electron.IpcRendererEvent, ...args: any[]) => {
+    const itemList = args[0] as Partial<{ id: string, title: string, path: string, hasLocal: boolean }>[]
+    const templateMap: { [key: string]: FileItem } = {}
+    for (let i = 0; i < itemList.length; i++) {
+      const item = itemList[i]
+      if (item.hasLocal && item.path && item.id) {
+        const value = await readFile(item.path)
+        const id = item.id
+        templateMap[id] = { ...fileMap[id], body: value, isLoaded: true, isSynced: true, updatedAt: new Date().getTime() }
+      }
+      if (!item.hasLocal && item.path && item.title) {
+        const id = uuidV4()
+        templateMap[id] = new FileItem({
+          id,
+          title: item.title,
+          path: item.path,
+          createdAt: new Date().getTime(),
+          updatedAt: new Date().getTime()
+        })
+      }
+    }
+    const newFiles = { ...fileMap, ...templateMap }
+    setFileMap(newFiles)
+    saveFilesToStore(newFiles)
+  }
+
   useIpcRenderer({
     'save-edit-file': saveCurrentFile,
     'create-new-file': createNewFile,
-    'import-file': importFiles
+    'import-file': importFiles,
+    'active-file-uploaded': activeFileUploaded,
+    'file-downloaded': activeFileDownloaded,
+    'file-downloaded-all': fileDownloadedAll,
+    'loading-status': (message, status) => { setLoading(status) }
   })
 
   const [ruFileList, flFileList] = useFileListsWithContext({
@@ -259,6 +328,9 @@ function App () {
   return (
     <>
       <div className='d-flex w-100' style={{ minHeight: '100vh' }}>
+        {isLoading &&
+          <Loader />
+        }
         <div className='file-aside'>
           <FileSearch files={files} onClick={(id) => { fileClick(id) }}></FileSearch>
           {recentlyUsedFileIds.length > 0 && <>
@@ -270,7 +342,7 @@ function App () {
           <div className='file-aside-list'>
             {flFileList}
           </div>
-          <div style={{ position: 'fixed', bottom: 0, left: 0, width: '300px' }}>
+          <div>
             <div className="d-flex justify-content-between align-items-center">
               <div className='w-50'>
                 <BottomBtn
@@ -312,10 +384,12 @@ function App () {
                 onChange={onFileChange}
                 options={{
                   autofocus: true,
-                  minHeight: '482px',
                   previewRender: getPreviewRender(),
                 }}
               />
+              {activeFile.isSynced &&
+                <span className="sync-status">已同步，上次同步{timestampToString(activeFile.updatedAt)}</span>
+              }
             </>
           }
         </div>
