@@ -307,6 +307,20 @@ function App () {
     saveFilesToStore(newFiles)
   }
 
+  const filesUploaded = () => {
+    const newFiles = objToArr(fileMap).reduce((result, file) => {
+      const currentTime = new Date().getTime()
+      result[file.id] = {
+        ...fileMap[file.id],
+        isSynced: true,
+        updatedAt: currentTime,
+      }
+      return result
+    }, {} as FileMapProps)
+    setFileMap(newFiles)
+    saveFilesToStore(newFiles)
+  }
+
   useIpcRenderer({
     'save-edit-file': saveCurrentFile,
     'create-new-file': createNewFile,
@@ -314,6 +328,7 @@ function App () {
     'active-file-uploaded': activeFileUploaded,
     'file-downloaded': activeFileDownloaded,
     'file-downloaded-all': fileDownloadedAll,
+    'files-uploaded': filesUploaded,
     'loading-status': (message, status) => { setLoading(status) }
   })
 

@@ -86,7 +86,7 @@ const applicationMenuTemplate: Electron.MenuItemConstructorOptions[] = [{
     label: '全部同步至云端',
     enabled: CosIsConfig,
     click: () => {
-      ipcMain.emit('upload-all-to-qiniu')
+      ipcMain.emit('upload-all-to-cos')
     }
   }, {
     label: '从云端下载到本地',

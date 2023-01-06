@@ -217,6 +217,31 @@ const ipcMainHandle: { [key: string]: () => unknown } = {
         windowMap['main'].webContents.send('loading-status', false)
       })
     })
+  },
+  UploadAllToCos: () => {
+    ipcMain.on('upload-all-to-cos', async () => {
+      windowMap['main'].webContents.send('loading-status', true)
+      const manager = createManager()
+      const filesObj = fileStore.get('fileMap') as { [key: string]: FileItem }
+      const uploadPromiseArr = Object.keys(filesObj).map(key => {
+        const file = filesObj[key]
+        return manager.uploadFile(`${file.title}.md`, file.path)
+      })
+      Promise.all(uploadPromiseArr).then(result => {
+        console.log(result)
+        // show uploaded message
+        dialog.showMessageBox({
+          type: 'info',
+          title: `成功上传了${result.length}个文件`,
+          message: `成功上传了${result.length}个文件`,
+        })
+        windowMap['main'].webContents.send('files-uploaded')
+      }).catch(() => {
+        dialog.showErrorBox('同步失败', '请检查七牛云参数是否正确')
+      }).finally(() => {
+        windowMap['main'].webContents.send('loading-status', false)
+      })
+    })
   }
 }
 

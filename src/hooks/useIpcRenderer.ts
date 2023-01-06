@@ -9,7 +9,8 @@ type keyCode =
   'active-file-uploaded' |
   'loading-status' |
   'file-downloaded' |
-  'file-downloaded-all'
+  'file-downloaded-all' |
+  'files-uploaded'
 type callBackType = (event: Electron.IpcRendererEvent, ...args: any[]) => void
 
 const useIpcRenderer = (keyCallbackMap: Partial<{
