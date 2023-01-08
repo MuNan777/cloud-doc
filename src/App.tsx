@@ -198,7 +198,7 @@ function App () {
       const importFilesArr = filteredPaths.map(path => {
         return new FileItem({
           id: uuidV4(),
-          title: `${basename(path, extname(path))} (import)`,
+          title: `${basename(path, extname(path))}`,
           path,
           createdAt: new Date().getTime(),
         })

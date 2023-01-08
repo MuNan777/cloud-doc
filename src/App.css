@@ -25,6 +25,10 @@ body::-webkit-scrollbar {
 
 .c-link {
   cursor: pointer;
+  width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .start-page {

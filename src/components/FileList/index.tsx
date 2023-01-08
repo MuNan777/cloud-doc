@@ -136,6 +136,7 @@ const FileList = (props: FileListArgs) => {
                 </span>
                 <span
                   className='c-link'
+                  title={file.title}
                   style={{ height: '1.5rem', lineHeight: '1.5rem', width: '100%' }}
                   onClick={() => { onFileClick(file.id) }}
                 >
