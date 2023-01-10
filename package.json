@@ -1,6 +1,6 @@
 {
   "name": "cloud-doc",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "main": "main.js",
   "author": {
@@ -22,6 +22,8 @@
     "dev": "concurrently \"wait-on http://localhost:3000 && electron .\" \"cross-env BROWSER=none npm run start\"",
     "eject": "react-scripts eject",
     "dist": "electron-builder",
+    "release": "cross-env GH_TOKEN=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 electron-builder",
+    "prerelease": "npm run build && npm run build:ele && npm run build:cp",
     "predist": "npm run build && npm run build:ele && npm run build:cp"
   },
   "homepage": "./",
@@ -36,6 +38,9 @@
       "node_modules/**/*",
       "children-pages-build/**/*",
       "package.json"
+    ],
+    "publish": [
+      "github"
     ],
     "directories": {
       "buildResources": "assets"
