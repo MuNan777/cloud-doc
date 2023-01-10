@@ -1,9 +1,10 @@
-const { ipcRenderer } = window.require('electron')
+import { ipcRenderer } from 'electron'
+import Store from 'electron-store'
+import { join } from 'path'
+import pkg from '../../package.json'
+import './index.css'
 
-const Store = window.require('electron-store')
 const settingsStore = new Store({ name: 'Settings' })
-const { join } = window.require('path')
-const pkg = window.require('../package.json')
 
 const configArrDomId = ['#savedFileLocation', '#secretId', '#secretKey', '#bucketName', '#regionName']
 

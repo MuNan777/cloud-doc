@@ -3,35 +3,84 @@
   "version": "0.1.0",
   "private": true,
   "main": "main.js",
+  "author": {
+    "name": "Mu nan",
+    "email": "1208418170@qq.com"
+  },
   "dependencies": {
-    "@fortawesome/fontawesome-svg-core": "^6.2.1",
-    "@fortawesome/free-brands-svg-icons": "^6.2.1",
-    "@fortawesome/free-solid-svg-icons": "^6.2.1",
-    "@fortawesome/react-fontawesome": "^0.2.0",
-    "@types/marked": "^4.0.8",
-    "bootstrap": "^5.2.3",
-    "classnames": "^2.3.2",
-    "cos-nodejs-sdk-v5": "^2.11.18",
-    "easymde": "^2.18.0",
-    "electron-store": "^8.1.0",
-    "marked": "^4.2.4",
-    "node-polyfill-webpack-plugin": "^2.0.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-scripts": "5.0.1",
-    "react-simplemde-editor": "4.1.3",
-    "typescript": "^4.9.4",
-    "uuid": "^9.0.0",
-    "web-vitals": "^2.1.4"
+    "bootstrap": "^5.2.3"
   },
   "scripts": {
     "start": "react-app-rewired start",
     "build": "react-app-rewired build",
     "test": "react-app-rewired test",
     "watch:ele": "nodemon ele/esbuild/index.ts --watch \"./ele\"",
+    "watch:cp": "webpack -w",
+    "build:cp": "webpack",
+    "build:ele": "ts-node ele/esbuild/index.ts",
     "onlyEle": "nodemon --watch main.js --watch src/preload.js --exec \"electron .\"",
     "dev": "concurrently \"wait-on http://localhost:3000 && electron .\" \"cross-env BROWSER=none npm run start\"",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "dist": "electron-builder",
+    "predist": "npm run build && npm run build:ele && build:cp"
+  },
+  "homepage": "./",
+  "build": {
+    "appId": "cloudDoc",
+    "productName": "Md云文档",
+    "copyright": "Copyright © 2023 ${author}",
+    "files": [
+      "main.js",
+      "preload.js",
+      "build/**/*",
+      "node_modules/**/*",
+      "children-pages-build/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "buildResources": "assets"
+    },
+    "extends": null,
+    "mac": {
+      "category": "public.app-category.productivity",
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "dmg": {
+      "background": "assets/appdmg.png",
+      "icon": "assets/icon.icns",
+      "iconSize": 100,
+      "contents": [
+        {
+          "x": 380,
+          "y": 280,
+          "type": "link",
+          "path": "/Applications"
+        },
+        {
+          "x": 110,
+          "y": 280,
+          "type": "file"
+        }
+      ],
+      "window": {
+        "width": 500,
+        "height": 500
+      }
+    },
+    "win": {
+      "target": [
+        "msi",
+        "nsis"
+      ],
+      "icon": "assets/icon.ico",
+      "artifactName": "${productName}-Web-Setup-${version}.${ext}",
+      "publisherName": "Viking Zhang"
+    },
+    "nsis": {
+      "allowToChangeInstallationDirectory": true,
+      "oneClick": false,
+      "perMachine": false
+    }
   },
   "eslintConfig": {
     "extends": [
@@ -52,26 +101,50 @@
     ]
   },
   "devDependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.2.1",
+    "@fortawesome/free-brands-svg-icons": "^6.2.1",
+    "@fortawesome/free-solid-svg-icons": "^6.2.1",
+    "@fortawesome/react-fontawesome": "^0.2.0",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "@types/bootstrap": "^5.2.6",
     "@types/jest": "^27.5.2",
+    "@types/marked": "^4.0.8",
     "@types/node": "^16.18.8",
     "@types/react": "^18.0.26",
     "@types/react-dom": "^18.0.9",
     "@types/testing-library__jest-dom": "^5.14.5",
     "@types/uuid": "^9.0.0",
+    "classnames": "^2.3.2",
     "concurrently": "^7.6.0",
     "cross-env": "^7.0.3",
+    "css-loader": "^6.7.3",
     "customize-cra": "^1.0.0",
+    "easymde": "^2.18.0",
     "electron": "^22.0.0",
-    "electron-is-dev": "^2.0.0",
+    "electron-builder": "^23.6.0",
     "esbuild": "^0.16.4",
+    "html-webpack-plugin": "^5.5.0",
+    "marked": "^4.2.4",
+    "node-polyfill-webpack-plugin": "^2.0.1",
     "node-sass": "^8.0.0",
     "nodemon": "^2.0.20",
+    "react": "^18.2.0",
     "react-app-rewired": "^2.2.1",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1",
+    "react-simplemde-editor": "4.1.3",
+    "style-loader": "^3.3.1",
     "ts-node": "^10.9.1",
-    "wait-on": "^6.0.1"
+    "typescript": "^4.9.4",
+    "uuid": "^9.0.0",
+    "wait-on": "^6.0.1",
+    "web-vitals": "^2.1.4",
+    "cos-nodejs-sdk-v5": "^2.11.18",
+    "electron-is-dev": "^2.0.0",
+    "electron-store": "^8.1.0",
+    "webpack": "^5.75.0",
+    "webpack-cli": "^5.0.1"
   }
 }

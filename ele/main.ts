@@ -5,7 +5,7 @@ import { loadIpcMainHandle, setWindowMap } from './ipc/ipcMainHandle'
 import Store from 'electron-store'
 import { AppWindow } from './common'
 
-const urlLocation = isDev ? 'http://localhost:3000' : 'dummyUrl'
+const urlLocation = isDev ? 'http://localhost:3000' : `file://${path.join(__dirname, './build/index.html')}`
 
 const createWindow = () => {
   let mainWindow: AppWindow | null = new AppWindow({
@@ -37,13 +37,14 @@ const createWindow = () => {
           contextIsolation: false,
         }
       }
-      const settingsFileLocation = `file://${path.join(__dirname, './settings/settings.html')}`
+      const settingsFileLocation = `file://${path.join(__dirname, './children-pages-build/settings.html')}`
       let settingsWindow: AppWindow | null = new AppWindow(settingsWindowConfig, settingsFileLocation)
       settingsWindow.removeMenu()
       settingsWindow.on('closed', () => {
         settingsWindow = null
       })
       setWindowMap('settings', settingsWindow)
+      // settingsWindow.webContents.toggleDevTools() 
     }
   })
 }
