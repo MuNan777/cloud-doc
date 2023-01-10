@@ -22,7 +22,7 @@
     "dev": "concurrently \"wait-on http://localhost:3000 && electron .\" \"cross-env BROWSER=none npm run start\"",
     "eject": "react-scripts eject",
     "dist": "electron-builder",
-    "predist": "npm run build && npm run build:ele && build:cp"
+    "predist": "npm run build && npm run build:ele && npm run build:cp"
   },
   "homepage": "./",
   "build": {
