@@ -36,7 +36,15 @@ export const initAutoUpdater = (browserWindow: BrowserWindow) => {
     })
   })
   autoUpdater.on('download-progress', (progressObj) => {
-    console.log(progressObj)
+    if (progressObj.percent && progressObj.percent < 100) {
+      browserWindow.webContents.send('loading-status', {
+        status: true,
+        message: `下载中...${progressObj.percent.toFixed(2)}%`
+      })
+    } else {
+      browserWindow.webContents.send('loading-status', { status: false })
+    }
+
   })
   autoUpdater.on('update-downloaded', () => {
     dialog.showMessageBox({

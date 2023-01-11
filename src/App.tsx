@@ -18,6 +18,7 @@ import "easymde/dist/easymde.min.css"
 import { downloadFile, showMessageBox, showOpenDialog, uploadFile } from './ipc/ipcRenderer'
 import { basename, extname } from 'path'
 import Loader from './components/Loader'
+import pkg from '../package.json'
 
 const { join, dirname } = window.require('path')
 
@@ -43,6 +44,7 @@ const saveFilesToStore = (fileMap: FileMapProps) => {
 let savedLocation: null | string = null;
 
 (async () => {
+  console.log(pkg.version)
   if (!savedLocation) {
     savedLocation = await SAVED_LOCATION()
   }
@@ -61,6 +63,7 @@ function App () {
   const [unSavedFileIds, setUnSavedFileIds] = useState<string[]>([])
   const [recentlyUsedFileIds, setRecentlyUsedFileIds] = useState<string[]>(ruIdsStore.get('ids') || [])
   const [isLoading, setLoading] = useState(false)
+  const [loadingMessage, setLoadingMessage] = useState('处理中')
   const files = objToArr(fileMap)
   const activeFile = fileMap[activeFileId]
   const openedFiles = openedFileIds.map(openId => {
@@ -329,7 +332,13 @@ function App () {
     'file-downloaded': activeFileDownloaded,
     'file-downloaded-all': fileDownloadedAll,
     'files-uploaded': filesUploaded,
-    'loading-status': (message, status) => { setLoading(status) }
+    'loading-status': (event, { status, message }) => {
+      setLoading(status)
+      console.log(status, message)
+      if (message != null && message !== '') {
+        setLoadingMessage(message)
+      }
+    }
   })
 
   const [ruFileList, flFileList] = useFileListsWithContext({
@@ -344,7 +353,7 @@ function App () {
     <>
       <div className='d-flex w-100' style={{ minHeight: '100vh' }}>
         {isLoading &&
-          <Loader />
+          <Loader text={loadingMessage} />
         }
         <div className='file-aside'>
           <FileSearch files={files} onClick={(id) => { fileClick(id) }}></FileSearch>

@@ -79,7 +79,9 @@
       ],
       "icon": "assets/icon.ico",
       "artifactName": "${productName}-Web-Setup-${version}.${ext}",
-      "publisherName": "Mu Nan"
+      "publisherName": [
+        "Mu Nan"
+      ]
     },
     "nsis": {
       "allowToChangeInstallationDirectory": true,

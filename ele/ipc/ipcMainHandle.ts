@@ -141,7 +141,7 @@ const ipcMainHandle: { [key: string]: () => unknown } = {
       if (!savedLocation) {
         savedLocation = await SAVED_LOCATION()
       }
-      windowMap['main'].webContents.send('loading-status', true)
+      windowMap['main'].webContents.send('loading-status', { status: true })
       const manager = createManager()
       const filesObj = fileStore.get('fileMap') as { [key: string]: FileItem }
       const keys = Object.keys(filesObj)
@@ -214,13 +214,13 @@ const ipcMainHandle: { [key: string]: () => unknown } = {
         console.log(err)
         dialog.showErrorBox('文件来取', '请检查腾讯云参数是否正确')
       }).finally(() => {
-        windowMap['main'].webContents.send('loading-status', false)
+        windowMap['main'].webContents.send('loading-status', { status: false })
       })
     })
   },
   UploadAllToCos: () => {
     ipcMain.on('upload-all-to-cos', async () => {
-      windowMap['main'].webContents.send('loading-status', true)
+      windowMap['main'].webContents.send('loading-status', { status: true })
       const manager = createManager()
       const filesObj = fileStore.get('fileMap') as { [key: string]: FileItem }
       const uploadPromiseArr = Object.keys(filesObj).map(key => {
@@ -239,7 +239,7 @@ const ipcMainHandle: { [key: string]: () => unknown } = {
       }).catch(() => {
         dialog.showErrorBox('同步失败', '请检查七牛云参数是否正确')
       }).finally(() => {
-        windowMap['main'].webContents.send('loading-status', false)
+        windowMap['main'].webContents.send('loading-status', { status: false })
       })
     })
   }
