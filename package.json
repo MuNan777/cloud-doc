@@ -79,6 +79,7 @@
       ],
       "icon": "assets/icon.ico",
       "artifactName": "${productName}-Web-Setup-${version}.${ext}",
+      "verifyUpdateCodeSignature": false,
       "publisherName": [
         "Mu Nan"
       ]

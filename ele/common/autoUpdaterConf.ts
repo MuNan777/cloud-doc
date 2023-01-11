@@ -29,12 +29,12 @@ export const initAutoUpdater = (browserWindow: BrowserWindow) => {
       }
     })
   })
-  autoUpdater.on('update-not-available', () => {
-    dialog.showMessageBox({
-      title: '没有新版本',
-      message: '当前已经是最新版本'
-    })
-  })
+  // autoUpdater.on('update-not-available', () => {
+  //   dialog.showMessageBox({
+  //     title: '没有新版本',
+  //     message: '当前已经是最新版本'
+  //   })
+  // })
   autoUpdater.on('download-progress', (progressObj) => {
     if (progressObj.percent && progressObj.percent < 100) {
       browserWindow.webContents.send('loading-status', {
