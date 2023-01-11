@@ -24,5 +24,7 @@ yarn-error.log*
 
 dist
 children-pages-build
+main.js
+preload.js
 
 release-config/env.json
