@@ -1,5 +1,8 @@
 import { BrowserWindow } from 'electron'
 
+export * from './CosManager'
+export * from './autoUpdaterConf'
+
 export class AppWindow extends BrowserWindow {
   constructor(config: Electron.BrowserWindowConstructorOptions, urlLocation: string) {
     const baseConfig = {

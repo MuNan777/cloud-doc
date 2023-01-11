@@ -3,7 +3,7 @@ import isDev from 'electron-is-dev'
 import path from 'path'
 import { loadIpcMainHandle, setWindowMap } from './ipc/ipcMainHandle'
 import Store from 'electron-store'
-import { AppWindow } from './common'
+import { AppWindow, initAutoUpdater } from './common'
 
 const urlLocation = isDev ? 'http://localhost:3000' : `file://${path.join(__dirname, './build/index.html')}`
 
@@ -17,6 +17,9 @@ const createWindow = () => {
       contextIsolation: false,
     }
   }, urlLocation)
+
+  initAutoUpdater(mainWindow)
+
   mainWindow.on('closed', () => {
     mainWindow = null
   })

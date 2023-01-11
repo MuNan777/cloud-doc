@@ -79,7 +79,7 @@
       ],
       "icon": "assets/icon.ico",
       "artifactName": "${productName}-Web-Setup-${version}.${ext}",
-      "publisherName": "Viking Zhang"
+      "publisherName": "Mu Nan"
     },
     "nsis": {
       "allowToChangeInstallationDirectory": true,
