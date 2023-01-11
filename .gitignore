@@ -24,3 +24,5 @@ yarn-error.log*
 
 dist
 children-pages-build
+
+release-config/env.json
