@@ -75,6 +75,12 @@ function App () {
 
   const fileList = files.sort((a, b) => b.createdAt - a.createdAt)
 
+  const loadLocalFileContent = async (path: string, fileId: string) => {
+    const value = await readFile(path)
+    const newFile = { ...fileMap[fileId], body: value, isLoaded: true, originBody: value }
+    setFileMap({ ...fileMap, [fileId]: newFile })
+  }
+
   const fileClick = async (fileId: string) => {
     setActiveFileId(fileId)
     const currentFile = fileMap[fileId]
@@ -84,9 +90,7 @@ function App () {
         if (getAutoSync()) {
           downloadFile(title, path, fileId)
         } else {
-          const value = await readFile(currentFile.path)
-          const newFile = { ...fileMap[fileId], body: value, isLoaded: true, originBody: value }
-          setFileMap({ ...fileMap, [fileId]: newFile })
+          loadLocalFileContent(currentFile.path, fileId)
         }
       }
       if (!openedFileIds.includes(fileId)) {
@@ -346,6 +350,7 @@ function App () {
     onFileClick: fileClick,
     onSaveEdit: updateFileName,
     onFileDelete: deleteFile,
+    onLoadLocalFileContent: loadLocalFileContent,
     markAndFiles: [{ mark: 'ru', files: recentlyUsedFiles }, { mark: 'fl', files: fileList }]
   })
 
