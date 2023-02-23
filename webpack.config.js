@@ -3,10 +3,15 @@ const fs = require('fs')
 const dirs = fs.readdirSync('children-pages-src')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 
-const entry = {}
+const entry = {
+  vendors: ['./node_modules/electron', './node_modules/electron-store']
+}
 const plugins = []
 dirs.forEach((dir) => {
-  entry[dir] = path.resolve(__dirname, './children-pages-src', `${dir}/index.js`)
+  entry[dir] = {
+    import: path.resolve(__dirname, './children-pages-src', `${dir}/index.js`),
+    dependOn: 'vendors'
+  }
   plugins.push(new HtmlWebpackPlugin({
     template: path.resolve(__dirname, './children-pages-src', `${dir}/index.html`),
     filename: `${dir}.html`,
@@ -19,7 +24,7 @@ module.exports = {
   entry,
   output: {
     path: path.resolve(__dirname, './children-pages-build'),
-    filename: '[name].js'
+    filename: '[name].js',
   },
   module: {
     rules: [{
@@ -27,7 +32,6 @@ module.exports = {
       use: ['style-loader', 'css-loader']
     }]
   },
-  mode: 'production',
   plugins,
   node: {
     __dirname: false

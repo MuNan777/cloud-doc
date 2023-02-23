@@ -4,6 +4,7 @@ import path from 'path'
 import { loadIpcMainHandle, setWindowMap } from './ipc/ipcMainHandle'
 import Store from 'electron-store'
 import { AppWindow, initAutoUpdater } from './common'
+import electronReload from 'electron-reloader'
 
 const urlLocation = isDev ? 'http://localhost:3000' : `file://${path.join(__dirname, './build/index.html')}`
 
@@ -51,6 +52,11 @@ const createWindow = () => {
     }
   })
 }
+
+// 热加载
+try {
+  electronReload(module, {});
+} catch (_) { }
 
 app.whenReady().then(() => {
   createWindow()

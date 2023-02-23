@@ -2,6 +2,7 @@ import { BrowserWindow } from 'electron'
 
 export * from './CosManager'
 export * from './autoUpdaterConf'
+export * from './appTray'
 
 export class AppWindow extends BrowserWindow {
   constructor(config: Electron.BrowserWindowConstructorOptions, urlLocation: string) {

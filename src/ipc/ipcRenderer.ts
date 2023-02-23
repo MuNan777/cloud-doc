@@ -3,7 +3,6 @@ import { getPathType } from "../types";
 
 let id = 0
 
-
 export const contextmenu = (menuItems: MenuItemConstructorOptions[]) => {
   const menuClickMap = new Map<Number, Function>()
   const items = []

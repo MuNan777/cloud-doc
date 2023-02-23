@@ -17,6 +17,7 @@
     "watch:ele": "nodemon ele/esbuild/index.ts --watch \"./ele\"",
     "watch:cp": "webpack -w",
     "build:cp": "webpack",
+    "analyzer:cp": "webpack -c ./webpack.analyzer.config.js",
     "build:ele": "ts-node ele/esbuild/index.ts",
     "onlyEle": "nodemon --watch main.js --watch src/preload.js --exec \"electron .\"",
     "dev": "concurrently \"wait-on http://localhost:3000 && electron .\" \"cross-env BROWSER=none npm run start\"",
@@ -125,6 +126,7 @@
     "@types/testing-library__jest-dom": "^5.14.5",
     "@types/uuid": "^9.0.0",
     "classnames": "^2.3.2",
+    "compression-webpack-plugin": "^10.0.0",
     "concurrently": "^7.6.0",
     "cos-nodejs-sdk-v5": "^2.11.18",
     "cross-env": "^7.0.3",
@@ -134,6 +136,7 @@
     "electron": "^22.0.0",
     "electron-builder": "^23.6.0",
     "electron-is-dev": "^2.0.0",
+    "electron-reloader": "^1.2.3",
     "electron-store": "^8.1.0",
     "electron-updater": "^5.3.0",
     "esbuild": "^0.16.4",
@@ -154,6 +157,7 @@
     "wait-on": "^6.0.1",
     "web-vitals": "^2.1.4",
     "webpack": "^5.75.0",
+    "webpack-bundle-analyzer": "^4.7.0",
     "webpack-cli": "^5.0.1"
   }
 }
