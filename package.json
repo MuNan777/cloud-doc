@@ -20,7 +20,7 @@
     "analyzer:cp": "webpack -c ./webpack.analyzer.config.js",
     "build:ele": "ts-node ele/esbuild/index.ts",
     "onlyEle": "nodemon --watch main.js --watch src/preload.js --exec \"electron .\"",
-    "dev": "concurrently \"wait-on http://localhost:3000 && electron .\" \"cross-env BROWSER=none npm run start\"",
+    "dev": "concurrently \"npm run watch:ele\" \"npm run watch:cp\" \"wait-on http://localhost:3000 && electron .\" \"cross-env BROWSER=none npm run start\"",
     "eject": "react-scripts eject",
     "dist": "electron-builder",
     "release": "node release-config/index.js electron-builder",
