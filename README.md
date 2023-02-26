@@ -13,16 +13,16 @@
 npm install
 ```
 
-## Usage
+## Dev
 
 ```sh
 npm run dev
 ```
 
-## Run tests
+## Release
 
 ```sh
-npm run test
+npm run release
 ```
 
 ## Author
