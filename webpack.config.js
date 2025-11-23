@@ -21,6 +21,7 @@ dirs.forEach((dir) => {
 
 module.exports = {
   target: 'electron-main',
+  mode: 'production',
   entry,
   output: {
     path: path.resolve(__dirname, './children-pages-build'),

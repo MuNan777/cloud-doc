@@ -18,7 +18,6 @@ import "easymde/dist/easymde.min.css"
 import { downloadFile, showMessageBox, showOpenDialog, uploadFile } from './ipc/ipcRenderer'
 import { basename, extname } from 'path'
 import Loader from './components/Loader'
-import pkg from '../package.json'
 
 const { join, dirname } = window.require('path')
 
@@ -44,7 +43,6 @@ const saveFilesToStore = (fileMap: FileMapProps) => {
 let savedLocation: null | string = null;
 
 (async () => {
-  console.log(pkg.version)
   if (!savedLocation) {
     savedLocation = await SAVED_LOCATION()
   }
@@ -56,7 +54,7 @@ let savedLocation: null | string = null;
 const settingsStore = new Store({ name: 'Settings' })
 const getAutoSync = () => ['secretId', 'secretKey', 'bucketName', 'regionName', 'enableAutoSync'].every(key => !!settingsStore.get(key))
 
-function App () {
+function App() {
   const [fileMap, setFileMap] = useState<FileMapProps>(fileStore.get('fileMap') || {})
   const [activeFileId, setActiveFileId] = useState('')
   const [openedFileIds, setOpenedFileIds] = useState<string[]>([])
@@ -338,7 +336,6 @@ function App () {
     'files-uploaded': filesUploaded,
     'loading-status': (event, { status, message }) => {
       setLoading(status)
-      console.log(status, message)
       if (message != null && message !== '') {
         setLoadingMessage(message)
       }

@@ -14,8 +14,8 @@ const createWindow = () => {
     height: 690,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: true,
-      contextIsolation: false,
+      nodeIntegration: false,
+      contextIsolation: true,
     }
   }, urlLocation)
 
@@ -37,8 +37,9 @@ const createWindow = () => {
         height: 480,
         parent: mainWindow,
         webPreferences: {
-          nodeIntegration: true,
-          contextIsolation: false,
+          preload: path.join(__dirname, '../cloud-doc/preload.js'),
+          nodeIntegration: false,
+          contextIsolation: true,
         }
       }
       const settingsFileLocation = `file://${path.join(__dirname, './children-pages-build/settings.html')}`
